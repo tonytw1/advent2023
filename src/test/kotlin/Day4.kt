@@ -50,13 +50,12 @@ class Day4 : Helpers {
     private fun numberOfWins(c: Card) = c.ours.filter { c.winning.contains(it) }.size
 
     private fun parseCards(filename: String): List<Card> {
-        val lines = stringsFromFile(filename)
-        val cards = lines.map { line ->
-            val splits = line.split(":")
-            val id = splits[0].replace(Regex("\\s+"), " ").replace("Card ", "").toInt()
-            val results = splits[1].split("|")
-            val winning = results[0].trim().replace(Regex("\\s+"), " ").split(" ").map { it.toInt() }
-            val ours = results[1].trim().replace(Regex("\\s+"), " ").split(" ").map { it.trim().toInt() }
+        val cards = stringsFromFile(filename).map { line ->
+            val splits = line.replace(Regex("\\s+"), " ").split(": ")
+            val id = splits[0].replace("Card ", "").toInt()
+            val results = splits[1].split(" | ")
+            val winning = results[0].split(" ").map { it.toInt() }
+            val ours = results[1].split(" ").map { it.toInt() }
             Card(id, winning, ours)
         }
         return cards
