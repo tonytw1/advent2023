@@ -10,6 +10,45 @@ class Day4 : Helpers {
         assertEquals(winningPoints(parseCards("day4.txt")), 26346)
     }
 
+    @Test
+    fun part2() {
+        assertEquals(countWon(parseCards("day4example.txt")), 30)
+        assertEquals(countWon(parseCards("day4.txt")), 8467762)
+    }
+
+    private fun winningPoints(cards: List<Card>): Int {
+        return cards.map { numberOfWins(it) }.sumOf { n ->
+            if (n > 0) {
+                2.0.pow(n - 1).toInt()
+            } else {
+                0
+            }
+        }
+    }
+
+    private fun countWon(cards: List<Card>): Int {
+        // We start with 1 copy of each card; but this can change as we work through the deck
+        val counts = cards.associate {
+            Pair(it.id, 1)
+        }.toMutableMap()
+
+        // We will visit each card number in order.
+        for (i in cards.indices) {
+            val card = cards[i]
+            val wins = numberOfWins(card)
+            val copiesOfCard = counts[card.id]!!
+            val nextCards = (card.id + 1)..card.id + wins
+            // Increment the number of copies of the won cards
+            for (w in nextCards) {
+                counts[w] = counts[w]!! + copiesOfCard
+            }
+        }
+
+        return counts.values.sum()
+    }
+
+    private fun numberOfWins(c: Card) = c.ours.filter { c.winning.contains(it) }.size
+
     private fun parseCards(filename: String): List<Card> {
         val lines = stringsFromFile(filename)
         val cards = lines.map { line ->
@@ -21,20 +60,6 @@ class Day4 : Helpers {
             Card(id, winning, ours)
         }
         return cards
-    }
-
-    private fun winningPoints(cards: List<Card>): Int {
-        return cards.map { c ->
-            c.ours.filter { i ->
-                c.winning.contains(i)
-            }.size
-        }.sumOf { n ->
-            if (n > 0) {
-                2.0.pow(n - 1).toInt()
-            } else {
-                0
-            }
-        }
     }
 }
 
