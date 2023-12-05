@@ -5,15 +5,38 @@ class Day5 : Helpers {
 
     @Test
     fun part1() {
-        assertEquals(locationsFrom(parseAlmanac("day5example.txt")).min(), 35)
-        assertEquals(locationsFrom(parseAlmanac("day5.txt")).min(), 579439039)
+        val example = parseAlmanac("day5example.txt")
+        assertEquals(locationsFrom(example.seeds, example.mappings).min(), 35)
+        val actual = parseAlmanac("day5.txt")
+        assertEquals(locationsFrom(actual.seeds, actual.mappings).min(), 579439039)
     }
 
-    private fun locationsFrom(almanac: Almanac): List<Long> {
-        val locations = almanac.seeds.map { seed ->
+    @Test
+    fun part2() {
+        val example = parseAlmanac("day5example.txt")
+
+        val seedRanges = mutableListOf<LongRange>()
+        var i = 0
+        while (i < example.seeds.size) {
+            val first = example.seeds[i]
+            val length = example.seeds[i + 1]
+            seedRanges.add(first..first + length)
+            i +=2
+        }
+
+        val seeds = seedRanges.map { r ->
+            r.toList()
+        }.flatten()
+
+        val locationsFrom = locationsFrom(seeds, example.mappings)
+        assertEquals(locationsFrom.min(), 46)
+    }
+
+    private fun locationsFrom(seeds: List<Long>, mappings: List<Mapping>): List<Long> {
+        val locations = seeds.map { seed ->
             // Foreach seed, transform it through each mapping
             var s = seed
-            almanac.mappings.forEach { mapping ->
+            mappings.forEach { mapping ->
                 // Is there a mapping which catches this inpout
                 val matchingRange = mapping.ranges.find { r ->
                     val inputRange = r.source..r.source + r.size
