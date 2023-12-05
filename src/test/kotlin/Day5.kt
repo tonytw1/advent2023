@@ -28,7 +28,6 @@ class Day5 : Helpers {
 
         // Only 100s of millions so just brute force it
         var min = Long.MAX_VALUE
-        var c = 0L
         seedRanges.forEach { r ->
             val iterator = r.iterator()
             while (iterator.hasNext()) {
@@ -36,7 +35,6 @@ class Day5 : Helpers {
                 if (location < min) {
                     min = location
                 }
-                c++
             }
         }
         assertEquals(min, 46)
