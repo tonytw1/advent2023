@@ -26,9 +26,7 @@ class Day5 : Helpers {
             i += 2
         }
 
-        val total = seedRanges.map {
-            it.last - it.first
-        }.sum()
+        // Only 100s of millions so just brute force it
         var min = Long.MAX_VALUE
         var c = 0L
         seedRanges.forEach { r ->
@@ -46,7 +44,7 @@ class Day5 : Helpers {
     }
 
     private fun locationsFrom(seeds: List<Long>, mappings: List<Mapping>): List<Long> {
-        val locations = seeds.map { seed ->
+        return seeds.map { seed ->
             // Foreach seed, transform it through each mapping
             var s = seed
             mappings.forEach { mapping ->
@@ -55,17 +53,11 @@ class Day5 : Helpers {
                     s in r.source
                 }
                 if (matchingRange != null) {
-                    val delta = matchingRange.delta
-                    val a = s + delta
-                    if (delta > 0 && a < s) {
-                        throw RuntimeException()
-                    }
-                    s = a
+                    s += matchingRange.delta
                 }
             }
             s
         }
-        return locations
     }
 
     private fun parseAlmanac(filename: String): Almanac {
