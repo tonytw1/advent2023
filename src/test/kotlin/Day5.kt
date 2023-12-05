@@ -13,7 +13,7 @@ class Day5 : Helpers {
 
     @Test
     fun part2() {
-        val almanac = parseAlmanac("day5example.txt")
+        val almanac = parseAlmanac("day5.txt")
 
         // Build seed ranges
         // There are no obvious overlaps; no wins from merging
@@ -32,8 +32,7 @@ class Day5 : Helpers {
         seedRanges.forEach { r ->
             val iterator = r.iterator()
             while (iterator.hasNext()) {
-                val element = iterator.next()
-                val location = locationsFrom(listOf(element), almanac.mappings).first()
+                val location = locationsFrom(listOf(iterator.next()), almanac.mappings).first()
                 if (location < min) {
                     min = location
                 }
