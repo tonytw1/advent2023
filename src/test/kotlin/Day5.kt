@@ -46,17 +46,17 @@ class Day5 : Helpers {
     private fun locationsFrom(seeds: List<Long>, mappings: List<Mapping>): List<Long> {
         return seeds.map { seed ->
             // Foreach seed, transform it through each mapping
-            var s = seed
-            mappings.forEach { mapping ->
+            mappings.fold(seed) { s: Long, mapping: Mapping ->
                 // Is there a mapping which catches this input
                 val matchingRange = mapping.ranges.find { r ->
                     s in r.source
                 }
                 if (matchingRange != null) {
-                    s += matchingRange.delta
+                    s + matchingRange.delta
+                } else {
+                    s
                 }
             }
-            s
         }
     }
 
