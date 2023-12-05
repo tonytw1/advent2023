@@ -13,7 +13,7 @@ class Day5 : Helpers {
 
     @Test
     fun part2() {
-        val example = parseAlmanac("day5example.txt")
+        val example = parseAlmanac("day5.txt")
 
         val seedRanges = mutableListOf<LongRange>()
         var i = 0
@@ -24,12 +24,35 @@ class Day5 : Helpers {
             i +=2
         }
 
-        val seeds = seedRanges.map { r ->
-            r.toList()
-        }.flatten()
+        println(seedRanges)
+        seedRanges.sortBy { it.first }
+            seedRanges.forEach {
+            println("" + it.first + " -> " + it.last  + ": " + (it.last - it.first))
+        }
 
-        val locationsFrom = locationsFrom(seeds, example.mappings)
-        assertEquals(locationsFrom.min(), 46)
+        val total = seedRanges.map {
+            it.last - it.first
+        }.sum()
+        println(total)
+
+        var min = Long.MAX_VALUE
+        var c = 0L
+        seedRanges.forEach { r ->
+            val iterator = r.iterator()
+            while(iterator.hasNext()) {
+                val element = iterator.next()
+                val location = locationsFrom(listOf(element), example.mappings).first()
+                if (location <  min) {
+                    println("" + element + ": " + location)
+                    min = location
+                }
+                c++
+                if (c % 1000000L == 0L) {
+                    println((c * 1.0 / total) * 100)
+                }
+            }
+        }
+        println("MIN: " + min)
     }
 
     private fun locationsFrom(seeds: List<Long>, mappings: List<Mapping>): List<Long> {
@@ -37,14 +60,18 @@ class Day5 : Helpers {
             // Foreach seed, transform it through each mapping
             var s = seed
             mappings.forEach { mapping ->
-                // Is there a mapping which catches this inpout
+                // Is there a mapping which catches this input
                 val matchingRange = mapping.ranges.find { r ->
                     val inputRange = r.source..r.source + r.size
                     s in inputRange
                 }
                 if (matchingRange != null) {
                     val delta = matchingRange.destination - matchingRange.source
-                    s += delta
+                    val a = s + delta
+                    if (delta > 0 && a < s) {
+                        throw RuntimeException()
+                    }
+                    s = a
                 }
             }
             s
