@@ -14,4 +14,7 @@ interface Helpers {
         return stringsFromFile(filename).map { it.toLong() }
     }
 
+    val multipleBlankSpace: Regex
+        get() = Regex("\\s+")
+
 }

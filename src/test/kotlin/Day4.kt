@@ -51,7 +51,7 @@ class Day4 : Helpers {
 
     private fun parseCards(filename: String): List<Card> {
         val cards = stringsFromFile(filename).map { line ->
-            val splits = line.replace(Regex("\\s+"), " ").split(": ")
+            val splits = line.replace(multipleBlankSpace, " ").split(": ")
             val id = splits[0].replace("Card ", "").toInt()
             val results = splits[1].split(" | ")
             val winning = results[0].split(" ").map { it.toInt() }
