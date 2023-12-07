@@ -5,19 +5,21 @@ class Day7 : Helpers {
 
     @Test
     fun part1() {
-        assertEquals(totalWinnings(parseHands("day7example.txt"), jokers = false), 6440)
-        assertEquals(totalWinnings(parseHands("day7.txt"), jokers = false), 247961593)
+        val charStrengths = listOf('A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2')
+        assertEquals(totalWinnings(parseHands("day7example.txt"), charStrengths, jokers = false), 6440)
+        assertEquals(totalWinnings(parseHands("day7.txt"), charStrengths, jokers = false), 247961593)
     }
 
     @Test
     fun part2() {
-        assertEquals(totalWinnings(parseHands("day7example.txt"), jokers = true), 5905)
-        assertEquals(totalWinnings(parseHands("day7.txt"), jokers = true), 248750699)
+        val charStrengths = listOf('A', 'K', 'Q', 'T', '9', '8', '7', '6', '5', '4', '3', '2', 'J') // Is different in part2!
+        assertEquals(totalWinnings(parseHands("day7example.txt"), charStrengths, jokers = true), 5905)
+        assertEquals(totalWinnings(parseHands("day7.txt"), charStrengths, jokers = true), 248750699)
     }
 
-    private fun totalWinnings(hands: List<Hand>, jokers: Boolean): Long {
-        val sorted = HandsSorter.sortHands(hands, jokers)
-        var t = 0L
+    private fun totalWinnings(hands: List<Hand>, charStrengths: List<Char>, jokers: Boolean): Long {
+        val sorted = HandsSorter.sortHands(hands, charStrengths, jokers)
+        var t = 0L  // TODO reduction?
         for (i in 1..sorted.size) {
             val hand = sorted[i - 1]
             t += hand.rank * i
@@ -36,11 +38,15 @@ class Day7 : Helpers {
 
 object HandsSorter {
 
-    private val charStrengths = listOf('A', 'K', 'Q', 'T', '9', '8', '7', '6', '5', '4', '3', '2', 'J') // Is different in part1!
-
-    val strengthOfFirstUniqueChar = object : Comparator<Hand> {
+    class TypeComparator(val jokers: Boolean) : Comparator<Hand> {
         override fun compare(a: Hand, b: Hand): Int {
-            for (i in 0..a.cards.length - 1) {
+            return b.type(jokers).compareTo(a.type(jokers))
+        }
+    }
+
+    class StrengthOfFirstUniqueChar(val charStrengths: List<Char>) : Comparator<Hand> {
+        override fun compare(a: Hand, b: Hand): Int {
+            for (i in 0..<a.cards.length) {
                 val indexOfA = charStrengths.indexOf(a.cards.toCharArray()[i])
                 val indexOfB = charStrengths.indexOf(b.cards.toCharArray()[i])
                 val cmp = indexOfB.compareTo(indexOfA)
@@ -52,19 +58,20 @@ object HandsSorter {
         }
     }
 
-    fun sortHands(hands: List<Hand>, jokers: Boolean): List<Hand> {
-        val sorted = mutableListOf<Hand>()
-
-        // By primary type
-        val byPrimary = hands.groupBy { it.type(jokers) }
-        // Then tie break
-        for (i in byPrimary.keys.max() downTo byPrimary.keys.min()) {
-            val handsOfType = byPrimary.getOrDefault(i, emptyList())
-            handsOfType.sortedWith(strengthOfFirstUniqueChar).forEach {
-                sorted.add(it)
+    fun sortHands(hands: List<Hand>, charStrengths: List<Char>, jokers: Boolean): List<Hand> {
+        val handsSorterWithTieBreaking = object : Comparator<Hand> {
+            val typeComparator = TypeComparator(jokers)
+            val strengthOfFirstUniqueChar = StrengthOfFirstUniqueChar(charStrengths)
+            override fun compare(a: Hand, b: Hand): Int {
+                val typeCmp = typeComparator.compare(a, b)
+                if (typeCmp != 0) {
+                    return typeCmp
+                }
+                // Else have same type and we need to tie break
+                return strengthOfFirstUniqueChar.compare(a, b)
             }
         }
-        return sorted
+        return hands.sortedWith(handsSorterWithTieBreaking)
     }
 
     private fun charCounts(cardsString: String): MutableMap<Char, Int> {
