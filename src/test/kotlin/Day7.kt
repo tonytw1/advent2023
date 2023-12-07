@@ -34,7 +34,7 @@ class Day7 : Helpers {
                     return typeCmp
                 }
                 // Else have same type and we need to tie break
-                return strengthOfFirstUniqueChar.compare(a, b)
+                return strengthOfFirstUniqueChar.compare(a.cards, b.cards)
             }
         }
         return hands.sortedWith(handsSorterWithTieBreaking)
@@ -46,11 +46,11 @@ class Day7 : Helpers {
         }
     }
 
-    class StrengthOfFirstUniqueChar(private val charStrengths: List<Char>) : Comparator<Hand> {
-        override fun compare(a: Hand, b: Hand): Int {
-            for (i in 0..<a.cards.length) {
-                val indexOfA = charStrengths.indexOf(a.cards.toCharArray()[i])
-                val indexOfB = charStrengths.indexOf(b.cards.toCharArray()[i])
+    class StrengthOfFirstUniqueChar(private val charStrengths: List<Char>) : Comparator<String> {
+        override fun compare(a: String, b: String): Int {
+            for (i in a.indices) {
+                val indexOfA = charStrengths.indexOf(a.toCharArray()[i])
+                val indexOfB = charStrengths.indexOf(b.toCharArray()[i])
                 val cmp = indexOfB.compareTo(indexOfA)
                 if (cmp != 0) {
                     return cmp
