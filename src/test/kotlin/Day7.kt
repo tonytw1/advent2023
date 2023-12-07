@@ -42,7 +42,9 @@ class Day7 : Helpers {
 
     class TypeComparator(private val jokers: Boolean) : Comparator<Hand> {
         override fun compare(a: Hand, b: Hand): Int {
-            return b.type(jokers).compareTo(a.type(jokers))
+            val aType = if (jokers) a.bestType else a.type
+            val bType = if (jokers) b.bestType else b.type
+            return bType.compareTo(aType)
         }
     }
 
@@ -61,17 +63,17 @@ class Day7 : Helpers {
     }
 
     private fun parseHands(filename: String): List<Hand> {
+        val allCardTypes = listOf('A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2')
+
         fun best(cards: String): String {
             // Accounting for jokers try to find the strongest sub available
-            // Foreach possible sub; create it than sort then
+            // Foreach possible sub; create it than sort them by strongest type
             if (!cards.contains('J')) {
                 return cards
             }
-            val subs = listOf('A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2')
-            val subbedHands = subs.map { c ->
-                Hand(cards.replace('J', c), 0, "", 0,0)  // TODO this is abit nasty
-            }
-            return subbedHands.sortedBy { typeOf(it.cards) }.first().cards
+            return allCardTypes.map { c ->
+                cards.replace('J', c)
+            }.sortedBy { typeOf(it) }.first()
         }
 
         return stringsFromFile(filename).map { line ->
@@ -80,51 +82,29 @@ class Day7 : Helpers {
             Hand(cards, rank, best(cards), typeOf(cards), typeOf(best(cards)))
         }
     }
-}
 
-fun typeOf(cardsString: String): Int {
-    fun charCounts(cardsString: String): MutableMap<Char, Int> {
+    private fun typeOf(cardsString: String): Int {
         val counts = mutableMapOf<Char, Int>()
         cardsString.toCharArray().forEach { c ->
             counts[c] = counts.getOrDefault(c, 0) + 1
         }
-        return counts
-    }
 
-    val counts = charCounts(cardsString)
-    val type = counts.values.max()
-
-    return when (type) {
-        5 -> 1
-        4 -> 2
-        3 -> if (counts.values.contains(2)) {
-            // Full house
-            3
-        } else {
-            // Three of a kind
-            4
-        }
-
-        2 -> if (counts.filter { it.value == 2 }.size == 2) {
-            // Two pair
-            5
-        } else {
-            // One pair
-            6
-        }
-
-        1 -> 7
-        else -> {
-            throw RuntimeException()
+        return when (counts.values.max()) {
+            5 -> 1
+            4 -> 2
+            3 -> if (counts.values.contains(2)) {
+                3 // Full house
+            } else 4 // Three of a kind
+            2 -> if (counts.filter { it.value == 2 }.size == 2) {
+                5   // Two pair
+            } else 6 // One pair
+            1 -> 7
+            else -> {
+                throw RuntimeException()
+            }
         }
     }
+
 }
 
-data class Hand(val cards: String, val rank: Int, val best: String, val type: Int, val bestType: Int) {
-    fun type(jokers: Boolean): Int {
-        if (jokers) {
-            return bestType
-        }
-        return type
-    }
-}
+data class Hand(val cards: String, val rank: Int, val best: String, val type: Int, val bestType: Int)
