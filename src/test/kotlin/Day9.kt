@@ -33,15 +33,14 @@ class Day9 : Helpers {
         val firstsAndLastsFor = firstsAndLastsFor(input)
         if (first) {
             val firsts = firstsAndLastsFor.first.toMutableList()
-            firsts.reverse()
-            return firsts.fold(0L) { acc, it ->
-                it - acc
+            return firsts.foldRight(0L) { acc, it ->
+                acc - it
             }
 
         } else {
             val lasts = firstsAndLastsFor.second
-            return lasts.fold(0L) { acc, it ->
-                it + acc
+            return lasts.foldRight(0L) { acc, it ->
+                acc + it
             }
         }
     }
