@@ -31,17 +31,17 @@ class Day9 : Helpers {
 
     private fun historyValueOf(input: List<Long>, first: Boolean): Long {
         val firstsAndLastsFor = firstsAndLastsFor(input)
-        if (first) {
-            val firsts = firstsAndLastsFor.first.toMutableList()
-            return firsts.foldRight(0L) { acc, it ->
+        val rollUp = if (first) {
+            Pair(firstsAndLastsFor.first) { acc, it ->
                 acc - it
             }
-
         } else {
-            val lasts = firstsAndLastsFor.second
-            return lasts.foldRight(0L) { acc, it ->
+            Pair(firstsAndLastsFor.second) { acc: Long, it: Long ->
                 acc + it
             }
+        }
+        return rollUp.first.foldRight(0L) { acc, it ->
+            rollUp.second(acc, it)
         }
     }
 
