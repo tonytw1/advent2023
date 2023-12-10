@@ -18,26 +18,25 @@ class Day10 : Helpers {
 
     @Test
     fun part1() {
-        assertEquals(trace(parseMap("day10example1.txt")).first.size -1, 4)
-        assertEquals(trace(parseMap("day10example2.txt")).first.size -1, 8)
-        assertEquals(trace(parseMap("day10.txt")).first.size -1 , 6714)
+        assertEquals(trace(parseMap("day10example1.txt")).first.size - 1, 4)
+        assertEquals(trace(parseMap("day10example2.txt")).first.size - 1, 8)
+        assertEquals(trace(parseMap("day10.txt")).first.size - 1, 6714)
     }
 
     @Test
     fun part2() {
         // Check that the part2 examples are valid
-       // assertEquals(trace(parseMap("day10part2example1.txt")).first.size -1, 23)
-     //   assertEquals(trace(parseMap("day10part2example2.txt")).first.size -1, 22)
-    //    assertEquals(trace(parseMap("day10part2example3.txt")).first.size -1 , 70)
-    //    assertEquals(trace(parseMap("day10part2example4.txt")).first.size -1 , 80)
-
+        assertEquals(trace(parseMap("day10part2example1.txt")).first.size - 1, 23)
+        assertEquals(trace(parseMap("day10part2example2.txt")).first.size - 1, 22)
+        assertEquals(trace(parseMap("day10part2example3.txt")).first.size - 1, 70)
+        assertEquals(trace(parseMap("day10part2example4.txt")).first.size - 1, 80)
 
         // Obtain the outline of the loop
         assertEquals(internallyEnclosed("day10part2example1.txt"), 4)
         assertEquals(internallyEnclosed("day10part2example2.txt"), 4)
         assertEquals(internallyEnclosed("day10part2example3.txt"), 8)
         assertEquals(internallyEnclosed("day10part2example4.txt"), 10)
-        //assertEquals(internallyEnclosed("day10.txt"), 10)
+        assertEquals(internallyEnclosed("day10.txt"), 429)
 
     }
 
@@ -46,8 +45,10 @@ class Day10 : Helpers {
         val trace = trace(map)
 
         val joined = trace.second.toMutableList()
-        joined.addAll(trace.first.drop(1).dropLast(1).reversed())
-        val loop = joined.dropLast(0).toList()
+        joined.addAll(trace.first.dropLast(1).reversed())
+        val loop = joined.toList()
+        println(loop)
+        val loopPoints = loop.map { it.point }.toSet()
 
         // Trace the loop; for every straight segment touch the ground to the left and right
         // Keep a heading so that left and right is maintained.
@@ -76,8 +77,7 @@ class Day10 : Helpers {
 
         fun enqueue(point: Point, left: Boolean) {
             if (point.y in 0..map.size - 1 && point.x in 0..map[0].size - 1) {
-                var c = map[point.y][point.x]
-                if (c == '.') {
+                if (!loopPoints.contains(point)) {
                     if (!regions.contains(point)) {
                         // New point
                         val regionId = nextRegionNumber
@@ -89,14 +89,12 @@ class Day10 : Helpers {
                         fill.add(point)
                         while (fill.isNotEmpty()) {
                             val p = fill.removeFirst()
-                            println("Enqueue: " + p)
 
                             regions[p] = regionId
-                            // Enqueue all of our neigbous
                             val neighboursOf = fillNeighboursOf(p, map)
-                            println("NS: " + neighboursOf)
                             neighboursOf.forEach { nc ->
-                                if (map[nc.y][nc.x] == '.') {
+                                val countsAsBeenEnclosed = !loopPoints.contains(nc)
+                                if (countsAsBeenEnclosed) {
                                     if (!regions.contains(nc) && !fill.contains(nc)) {
                                         fill.add(nc)
                                     } else {
@@ -127,22 +125,34 @@ class Day10 : Helpers {
             println("" + dx + ", " + dy)
 
             // Determine left and right
-
-            val leftAndRight = if (dy == 0) {
+            var leftAndRight = if (dy == 0) {
                 Pair(
-                    Point(c.point.y - dx, c.point.x),
-                    Point(c.point.y + dx, c.point.x)
+                    Point(c.point.y + dx, c.point.x),
+                    Point(c.point.y - dx, c.point.x)
                 )
             } else {
                 Pair(
-                    Point(c.point.y, c.point.x + dy),
-                    Point(c.point.y, c.point.x - dy)
+                    Point(c.point.y, c.point.x - dy),
+                    Point(c.point.y, c.point.x + dy)
                 )
             }
-
             enqueue(leftAndRight.first, false)
             enqueue(leftAndRight.second, true)
 
+            // Also do it for previous as corners have 2 lefts!
+            leftAndRight = if (dy == 0) {
+                Pair(
+                    Point(previous.point.y + dx, previous.point.x),
+                    Point(previous.point.y - dx, previous.point.x)
+                )
+            } else {
+                Pair(
+                    Point(previous.point.y, previous.point.x - dy),
+                    Point(previous.point.y, previous.point.x + dy)
+                )
+            }
+            enqueue(leftAndRight.first, false)
+            enqueue(leftAndRight.second, true)
             previous = c
         }
 
@@ -152,12 +162,18 @@ class Day10 : Helpers {
         println(regions.values)
         println(regionTypes)
 
+        regionTypes.keys.forEach { r ->
+            println("" + r + ": " + regions.filter { it.value == r }.size)
+        }
+
         val regionsWhichTouchBorder = regionTypes.keys.filter { regionId ->
             val isOutside = regions.filter { it ->
                 it.value == regionId
             }.any {
-                it.key.y == 0 || it.key.y == map.size - 1 ||
+                val isEdge = it.key.y == 0 || it.key.y == map.size - 1 ||
                         it.key.x == 0 || it.key.x == map[0].size - 1
+                isEdge
+
             }
             isOutside
         }
@@ -174,11 +190,11 @@ class Day10 : Helpers {
             !regionTypes.values.first()  // TODO check all the same
         }
 
-        val internalRegions = regionTypes.filter { it.value != outsideType}.keys
+        val internalRegions = regionTypes.filter { it.value != outsideType }.keys
         println("Internal: " + internalRegions)
 
         val r = internalRegions.map { internalRegion ->
-            regions.filter { it.value == internalRegion }.size
+            regions.filter { it: Map.Entry<Point, Int> -> it.value == internalRegion }.size
         }.sum()
         return r
     }
@@ -285,7 +301,8 @@ class Day10 : Helpers {
 
         // Determine possible values of start point to explore
         // For each possible joint type; find those which connect 2 neighbours
-        val results = validJointsFor(start.point, mapOfJointTypes, map).map { startJoint ->
+        val validJointsFor = validJointsFor(start.point, mapOfJointTypes, map)
+        val results = validJointsFor.map { startJoint ->
             traceWithStartingJoint(startJoint)
         }
         return results.sortedBy { it.first.size }.last()
@@ -320,7 +337,6 @@ class Day10 : Helpers {
         }
         return neighbours
     }
-
 
 }
 
