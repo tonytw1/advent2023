@@ -45,44 +45,41 @@ class Day10 : Helpers {
         val trace = trace(map)
 
         val joined = trace.second.toMutableList()
-        joined.addAll(trace.first.dropLast(1).reversed())
+        joined.addAll(trace.first.drop(1).dropLast(1).reversed())
         val loop = joined.toList()
-        println(loop)
         val loopPoints = loop.map { it.point }.toSet()
 
-        // Trace the loop; for every straight segment touch the ground to the left and right
-        // Keep a heading so that left and right is maintained.
+        // Trace out the loop; for every straight segment touch the ground to the left and right
+        // Keep a heading so that left and right can be worked out.
         // Flood fill from each touched region.
-        // Maintain unique regions and if they are left or right inited.
-        // At the end only left or right should be touching the border.
-        // This will tell us if left or right was inside our outside.
+        // Collect unique regions and if they were discovered to the left or right.
+        // At the end just the left or right regions should be touching the border.
+        // This will tell us if left or right was inside or outside the loop.
+        // We can then sum up the number of points in the outside regions
 
         var nextRegionNumber = 1
         val regions = mutableMapOf<Point, Int>()
         val regionTypes = mutableMapOf<Int, Boolean>()
 
         fun fillNeighboursOf(point: Point, map: Array<CharArray>): List<Point> {
-
-            val possibles: List<Point> = listOf(
+            return listOf(
                 Point(point.y - 1, point.x),
                 Point(point.y + 1, point.x),
                 Point(point.y, point.x + 1),
                 Point(point.y, point.x - 1)
-            )
-
-            return possibles.filter { p ->
-                p.y in 0..map.size - 1 && p.x in 0..map[0].size - 1
+            ).filter { p ->
+                p.y in map.indices && p.x in 0..<map[0].size
             }
         }
 
-        fun enqueue(point: Point, left: Boolean) {
-            if (point.y in 0..map.size - 1 && point.x in 0..map[0].size - 1) {
+        fun examine(point: Point, left: Boolean) {
+            // Given a point to the left or right of the loop, examine it and try to build connected regions of adjacent points
+            if (point.y in map.indices && point.x in 0..<map[0].size) {
                 if (!loopPoints.contains(point)) {
                     if (!regions.contains(point)) {
                         // New point
                         val regionId = nextRegionNumber
                         regionTypes[regionId] = left
-
                         nextRegionNumber += 1
 
                         val fill = ArrayDeque<Point>()
@@ -91,17 +88,15 @@ class Day10 : Helpers {
                             val p = fill.removeFirst()
 
                             regions[p] = regionId
-                            val neighboursOf = fillNeighboursOf(p, map)
-                            neighboursOf.forEach { nc ->
-                                val countsAsBeenEnclosed = !loopPoints.contains(nc)
-                                if (countsAsBeenEnclosed) {
+                            fillNeighboursOf(p, map).forEach { nc ->
+                                val isEnclosable = !loopPoints.contains(nc)
+                                if (isEnclosable) {
                                     if (!regions.contains(nc) && !fill.contains(nc)) {
                                         fill.add(nc)
                                     } else {
                                         if (regions[nc] != regionId) {
-                                            // Remap the regions we just touched.
+                                            // Remap the region we just touched to join it to us
                                             val oldRegionId = regions[nc]
-                                            println("remapping " + oldRegionId + " to " + regionId)
                                             regions.filter { it.value == oldRegionId }.forEach {
                                                 regions[it.key] = regionId
                                             }
@@ -117,89 +112,68 @@ class Day10 : Helpers {
 
         var previous = loop.first()
         loop.drop(1).forEach { c ->
-            println("CCCC " + c)
-            // We can always determine or direction
-            // Which means left and right
+            // We can always determine our direction from the location of the previous
             val dx = c.point.x - previous.point.x
             val dy = c.point.y - previous.point.y
-            println("" + dx + ", " + dy)
 
-            // Determine left and right
-            var leftAndRight = if (dy == 0) {
-                Pair(
-                    Point(c.point.y + dx, c.point.x),
-                    Point(c.point.y - dx, c.point.x)
-                )
-            } else {
-                Pair(
-                    Point(c.point.y, c.point.x - dy),
-                    Point(c.point.y, c.point.x + dy)
-                )
+            // This means left and right can be determined as well
+            // We don't know if left or right is inside the loop yet
+            fun examineLeftAndRightOf(p: Point) {
+                var leftAndRight = if (dy == 0) {
+                    Pair(
+                        Point(p.y + dx, p.x),
+                        Point(p.y - dx, p.x)
+                    )
+                } else {
+                    Pair(
+                        Point(p.y, p.x - dy),
+                        Point(p.y, p.x + dy)
+                    )
+                }
+                examine(leftAndRight.first, false)
+                examine(leftAndRight.second, true)
             }
-            enqueue(leftAndRight.first, false)
-            enqueue(leftAndRight.second, true)
 
-            // Also do it for previous as corners have 2 lefts!
-            leftAndRight = if (dy == 0) {
-                Pair(
-                    Point(previous.point.y + dx, previous.point.x),
-                    Point(previous.point.y - dx, previous.point.x)
-                )
-            } else {
-                Pair(
-                    Point(previous.point.y, previous.point.x - dy),
-                    Point(previous.point.y, previous.point.x + dy)
-                )
-            }
-            enqueue(leftAndRight.first, false)
-            enqueue(leftAndRight.second, true)
+            // Examine to the left and right of this point
+            examineLeftAndRightOf(c.point)
+            // Also do it for previous as corners have 2 lefts!!!
+            examineLeftAndRightOf(previous.point)
+
             previous = c
         }
 
-        // So we now have connected regions and we know if they were left of right.
-        // Need to determine of left or right is outside, as defined by touching the border.
-        println(regions.size)
-        println(regions.values)
-        println(regionTypes)
-
-        regionTypes.keys.forEach { r ->
-            println("" + r + ": " + regions.filter { it.value == r }.size)
-        }
-
+        // So we now have connected regions. We know if they were to the left of right of the loop.
+        // Need to determine if left or right is outside, as defined by touching the border.
         val regionsWhichTouchBorder = regionTypes.keys.filter { regionId ->
             val isOutside = regions.filter { it ->
                 it.value == regionId
             }.any {
-                val isEdge = it.key.y == 0 || it.key.y == map.size - 1 ||
+                it.key.y == 0 || it.key.y == map.size - 1 ||
                         it.key.x == 0 || it.key.x == map[0].size - 1
-                isEdge
 
             }
             isOutside
         }
 
-        println("Regions which touch border: " + regionsWhichTouchBorder)
-        val map1 = regionsWhichTouchBorder.map { regionId ->
-            regionTypes[regionId]
+        val leftOrRightnessOfRegionsWhichTouchBorder = regionsWhichTouchBorder.map { regionId ->
+            regionTypes[regionId]!!
         }
-        println(map1)
 
-        val outsideType = if (map1.isNotEmpty()) {
-            map1.first()  // TODO check all the same
+        // Knowing if left or right is the outside side helps us find outside regions which don't directly touch the border
+        val outsideRegionSide = if (leftOrRightnessOfRegionsWhichTouchBorder.isNotEmpty()) {
+            leftOrRightnessOfRegionsWhichTouchBorder.first()  // TODO check all the same
         } else {
             !regionTypes.values.first()  // TODO check all the same
         }
 
-        val internalRegions = regionTypes.filter { it.value != outsideType }.keys
-        println("Internal: " + internalRegions)
+        val internalRegions = regionTypes.filter { it.value != outsideRegionSide }.keys
 
-        val r = internalRegions.map { internalRegion ->
-            regions.filter { it: Map.Entry<Point, Int> -> it.value == internalRegion }.size
-        }.sum()
-        return r
+        return internalRegions.sumOf { internalRegion ->
+            regions.filter { it.value == internalRegion }.size
+        }
     }
 
-    fun trace(map: Array<CharArray>): Pair<List<Cell>, List<Cell>> {
+    private fun trace(map: Array<CharArray>): Pair<List<Cell>, List<Cell>> {
         // Locate the starting point
         val start = findStartingPoint(map)
         // Based on the pipe connecting into start
@@ -266,7 +240,7 @@ class Day10 : Helpers {
             // It's abit easier of are establise the direction of travel by taking the first step for it
             var depth = 1
             var left = move(startCell, mapOfJointTypes[startCell.c]!!.dirs.first())!!
-            val visitedLeft = mutableListOf(startCell)  // Part 2 - 40s to 1 sec perf hit for using a list
+            val visitedLeft = mutableListOf(startCell)  // Part 2 - 40ms to 1 sec perf hit for using a list
             var right = move(startCell, mapOfJointTypes[startCell.c]!!.dirs.last())!!
             val visitedRight = mutableListOf(startCell)
 
@@ -305,7 +279,7 @@ class Day10 : Helpers {
         val results = validJointsFor.map { startJoint ->
             traceWithStartingJoint(startJoint)
         }
-        return results.sortedBy { it.first.size }.last()
+        return results.maxByOrNull { it.first.size }!!
     }
 
     private fun parseMap(filename: String): Array<CharArray> {
