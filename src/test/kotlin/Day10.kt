@@ -237,12 +237,15 @@ class Day10 : Helpers {
             // From the start, BSF left and right in lock step
             // We stop with either arm revisits a node of has no next step of the two searches meet at the same point
 
-            // It's abit easier of are establise the direction of travel by taking the first step for it
+            // It's abit easier of are establish the direction of travel by taking the first step for it
             var depth = 1
             var left = move(startCell, mapOfJointTypes[startCell.c]!!.dirs.first())!!
-            val visitedLeft = mutableListOf(startCell)  // Part 2 - 40ms to 1 sec perf hit for using a list
+            val visitedLeft = mutableSetOf(startCell)
             var right = move(startCell, mapOfJointTypes[startCell.c]!!.dirs.last())!!
-            val visitedRight = mutableListOf(startCell)
+            val visitedRight = mutableSetOf(startCell)
+
+            val traceLeft = mutableListOf(startCell)
+            val traceRight = mutableListOf(startCell)
 
             var done = false
             while (!done) {
@@ -250,6 +253,7 @@ class Day10 : Helpers {
                 val nextLeftDir = connected(left).find { c -> !visitedLeft.contains(c.first) }
                 if (nextLeftDir != null) {
                     visitedLeft.add(left)
+                    traceLeft.add(left)
                     left = nextLeftDir.first
                 } else {
                     done = true
@@ -258,6 +262,7 @@ class Day10 : Helpers {
                 val nextRightDir = connected(right).find { c -> !visitedRight.contains(c.first) }
                 if (nextRightDir != null) {
                     visitedRight.add(right)
+                    traceRight.add(right)
                     right = nextRightDir.first
                 } else {
                     done = true
@@ -265,9 +270,9 @@ class Day10 : Helpers {
 
                 depth += 1
                 if (left == right) {
-                    visitedLeft.add(left)
-                    visitedRight.add(right)
-                    return Pair(visitedLeft.toList(), visitedRight.toList())
+                    traceLeft.add(left)
+                    traceRight.add(right)
+                    return Pair(traceLeft.toList(), traceRight.toList())
                 }
             }
             return Pair(emptyList(), emptyList())
