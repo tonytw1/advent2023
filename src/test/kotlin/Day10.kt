@@ -84,9 +84,7 @@ class Day10 : Helpers {
             return validJoints
         }
 
-        // Determine possible values of start point to explore
-        // For each possible joint type; find those which connect 2 neighbours
-        validJointsFor(start.point, mapOfJointTypes, map).forEach { startJoint ->
+        fun traceWithStartingJoint(startJoint: Joint): Int {
             map[start.point.y][start.point.x] = startJoint.c
             val startCell = start.copy(c = startJoint.c)
             // From the start, BSF left and right in lock step
@@ -123,9 +121,15 @@ class Day10 : Helpers {
                     return depth
                 }
             }
+            return -1
         }
 
-        return -1
+        // Determine possible values of start point to explore
+        // For each possible joint type; find those which connect 2 neighbours
+        val results = validJointsFor(start.point, mapOfJointTypes, map).map { startJoint ->
+            traceWithStartingJoint(startJoint)
+        }
+        return results.max()
     }
 
     private fun parseMap(filename: String): Array<CharArray> {
