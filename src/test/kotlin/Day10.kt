@@ -23,6 +23,15 @@ class Day10 : Helpers {
         assertEquals(trace("day10.txt"), 6714)
     }
 
+    @Test
+    fun part2() {
+        // Check that the part2 examples are valid
+        assertEquals(trace("day10part2example1.txt"), 23)
+        assertEquals(trace("day10part2example2.txt"), 22)
+        assertEquals(trace("day10part2example3.txt"), 70)
+        assertEquals(trace("day10part2example4.txt"), 80)
+    }
+
     fun trace(filename: String): Int {
         // Parse the map
         val map = parseMap(filename)
