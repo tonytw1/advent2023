@@ -55,10 +55,9 @@ class Day11 : Helpers {
             Galaxy(g.y + dy, g.x + dx)
         }
 
-        val distances = mutableListOf<Long>()
-        for (m in expandedGalaxies.indices) {
-            for (n in (m + 1)..<expandedGalaxies.size) {
-                distances.add(manhattanDist(expandedGalaxies[m], expandedGalaxies[n]))
+        val distances = expandedGalaxies.indices.flatMap { m ->
+            (m + 1..<expandedGalaxies.size).map { n ->
+                manhattanDist(expandedGalaxies[m], expandedGalaxies[n])
             }
         }
         return distances.sum()
@@ -69,4 +68,5 @@ class Day11 : Helpers {
 fun manhattanDist(a: Galaxy, b: Galaxy): Long {
     return abs(b.y - a.y) + abs(b.x - a.x)
 }
+
 data class Galaxy(val y: Long, val x: Long)
