@@ -1,6 +1,5 @@
 import org.testng.Assert.assertEquals
 import org.testng.annotations.Test
-import java.math.BigDecimal
 import kotlin.math.abs
 
 class Day11 : Helpers {
@@ -11,7 +10,6 @@ class Day11 : Helpers {
         assertEquals(sumOfExpandedDistances("day11.txt", 1), 10173804)
     }
 
-
     @Test
     fun part2() {
         assertEquals(sumOfExpandedDistances("day11example.txt", 10), 1030)
@@ -20,9 +18,7 @@ class Day11 : Helpers {
     }
 
     private fun sumOfExpandedDistances(filename: String, expansion: Long): Long {
-        // Read the galaxy,
-        // then expand it,
-        // them sum the Manhattan distances between them
+        // Read the map, then expand it, them sum the Manhattan distances between the galaxies
 
         val galaxy = stringsFromFile(filename).map {
             it.toCharArray()
@@ -52,30 +48,25 @@ class Day11 : Helpers {
         val expandedGalaxies = galaxies.map { g ->
             // Coords plus number of expands before
             val yExpansions = expandedRows.filter { it < g.y }.size
-            val xExpantions = expandedCols.filter { it < g.x }.size
-            val dy = (yExpansions * expansion) - yExpansions
-            val dx = (xExpantions * expansion) - xExpantions
+            val xExpansions = expandedCols.filter { it < g.x }.size
+            // With a correction which needs to be explained
+            val dy = (yExpansions * expansion) - (if (expansion == 1L) 0 else yExpansions)
+            val dx = (xExpansions * expansion) - (if (expansion == 1L) 0 else xExpansions)
             Galaxy(g.y + dy, g.x + dx)
         }
 
-        fun manhattenDist(a: Galaxy, b: Galaxy): Long {
-            return abs(b.y - a.y) + abs(b.x - a.x)
-        }
-
-        val dists = mutableListOf<Long>()
+        val distances = mutableListOf<Long>()
         for (m in expandedGalaxies.indices) {
             for (n in (m + 1)..<expandedGalaxies.size) {
-                dists.add(manhattenDist(expandedGalaxies[m], expandedGalaxies[n]))
+                distances.add(manhattanDist(expandedGalaxies[m], expandedGalaxies[n]))
             }
         }
-
-        println(dists)
-        val r = dists.fold(BigDecimal(0)) { acc, it ->
-            acc.add(BigDecimal(it))
-        }
-        println(r)
-        return r.toLong()
+        return distances.sum()
     }
+
 }
 
+fun manhattanDist(a: Galaxy, b: Galaxy): Long {
+    return abs(b.y - a.y) + abs(b.x - a.x)
+}
 data class Galaxy(val y: Long, val x: Long)
