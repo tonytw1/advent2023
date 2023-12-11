@@ -16,8 +16,7 @@ class Day11 : Helpers {
     fun part2() {
         assertEquals(sumOfExpandedDistances("day11example.txt", 10), 1030)
         assertEquals(sumOfExpandedDistances("day11example.txt", 100), 8410)
-        //82000210 is too low
-        println(sumOfExpandedDistances("day11example.txt", 1000000))
+        assertEquals(sumOfExpandedDistances("day11.txt", 1000000), 634324905172)
     }
 
     private fun sumOfExpandedDistances(filename: String, expansion: Long): Long {
@@ -54,8 +53,8 @@ class Day11 : Helpers {
             // Coords plus number of expands before
             val yExpansions = expandedRows.filter { it < g.y }.size
             val xExpantions = expandedCols.filter { it < g.x }.size
-            val dy = (yExpansions * expansion) //- yExpansions
-            val dx = (xExpantions * expansion) //- xExpantions
+            val dy = (yExpansions * expansion) - yExpansions
+            val dx = (xExpantions * expansion) - xExpantions
             Galaxy(g.y + dy, g.x + dx)
         }
 
