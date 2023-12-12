@@ -27,20 +27,29 @@ class Day12 : Helpers {
         var v = 0
 
         // Naive DFS
-        fun visit(canidate: String) {
-            val depth = canidate.length
+        fun visit(candidate: String) {
+            val depth = candidate.length
+
+            // Optimise by bailing on paths with incorrect steaks
+            if (depth > 0 && candidate.last() == '.') {
+                val currentStreaks: List<Int> = streaksFor(candidate)
+                if (r.counts.take(currentStreaks.size) != currentStreaks) {
+                    return
+                }
+            }
+
             if (depth == r.data.length) {
-                val valid = isValid(canidate, r.counts)
+                val valid = isValid(candidate, r.counts)
                 if (valid) {
                     v += 1
                 }
             } else {
                 val c = r.data[depth]
                 if (c == '?') {
-                    visit("$canidate.")
-                    visit("$canidate#")
+                    visit("$candidate.")
+                    visit("$candidate#")
                 } else {
-                    visit(canidate + c)
+                    visit(candidate + c)
                 }
 
             }
@@ -51,6 +60,11 @@ class Day12 : Helpers {
 
 
     fun isValid(data: String, counts: List<Int>): Boolean {
+        val streaks = streaksFor(data)
+        return streaks == counts
+    }
+
+    private fun streaksFor(data: String): MutableList<Int> {
         val streaks = mutableListOf<Int>()
         var streak = 0
         for (i in data.indices) {
@@ -67,7 +81,7 @@ class Day12 : Helpers {
         if (streak > 0) {
             streaks.add(streak)
         }
-        return streaks == counts
+        return streaks
     }
 
     private fun parseRecords(filename: String) = stringsFromFile(filename).map { line ->
@@ -79,7 +93,4 @@ class Day12 : Helpers {
 
 }
 
-data class ConditionRecord(val data: String, val counts: List<Int>) {
-
-
-}
+data class ConditionRecord(val data: String, val counts: List<Int>)
