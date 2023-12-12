@@ -1,6 +1,7 @@
 import org.testng.Assert.assertEquals
 import org.testng.Assert.assertTrue
 import org.testng.annotations.Test
+import java.math.BigDecimal
 
 class Day12 : Helpers {
 
@@ -8,6 +9,26 @@ class Day12 : Helpers {
     fun part1() {
         assertEquals(parseRecords("day12example1.txt").map { findValid(it) }.sum(), 21)
         assertEquals(parseRecords("day12.txt").map { findValid(it) }.sum(), 7110)
+    }
+
+    @Test
+    fun part2() {
+        val unfolded = parseRecords("day12example1.txt").map { unfold(it) }
+
+        var i =0
+        val scores = unfolded.reversed().map{ it ->
+            val findValid = findValid(it)
+            println("$i: $findValid")
+            i += 1
+            findValid
+
+        }
+
+        val total = scores.fold(BigDecimal(0)) { acc, it ->
+            acc.add(BigDecimal(it))
+        }
+
+        assertEquals(total, BigDecimal(525152))
     }
 
     @Test
@@ -21,6 +42,32 @@ class Day12 : Helpers {
         val records = parseRecords("day12example1.txt")
         assertEquals(findValid(records[1]), 4)
         assertEquals(findValid(records[5]), 10)
+    }
+
+    @Test
+    fun testUnfold() {
+        assertEquals(
+            unfold(ConditionRecord(".#", listOf((1)))),
+            ConditionRecord(".#?.#?.#?.#?.#", listOf(1, 1, 1, 1, 1))
+        )
+        assertEquals(
+            unfold(ConditionRecord("???.###", listOf(1, 1, 3))), ConditionRecord(
+                "???.###????.###????.###????.###????.###", listOf(
+                    1, 1, 3, 1, 1, 3, 1, 1, 3, 1, 1, 3, 1, 1, 3
+                )
+            )
+        )
+    }
+
+    fun unfold(record: ConditionRecord): ConditionRecord {
+        val data = (1..5).fold("") { acc, _ ->
+            "$acc${record.data}?"
+        }.dropLast(1)
+        val counts = (1..5).fold(mutableListOf<Int>()) { acc, _ ->
+            acc.addAll(record.counts)
+            acc
+        }
+        return ConditionRecord(data, counts)
     }
 
     private fun findValid(r: ConditionRecord): Int {
@@ -57,7 +104,6 @@ class Day12 : Helpers {
         visit("")
         return v
     }
-
 
     fun isValid(data: String, counts: List<Int>): Boolean {
         val streaks = streaksFor(data)
