@@ -70,39 +70,39 @@ class Day12 : Helpers {
         return ConditionRecord(data, counts)
     }
 
-    private fun findValid(r: ConditionRecord): Int {
-        var v = 0
-
+    private fun findValid(r: ConditionRecord): Long {
         // Naive DFS
-        fun visit(candidate: String) {
+        fun visit(candidate: String): Long {
             val depth = candidate.length
 
             // Optimise by bailing on paths with incorrect steaks
             if (depth > 0 && candidate.last() == '.') {
                 val currentStreaks: List<Int> = streaksFor(candidate)
                 if (r.counts.take(currentStreaks.size) != currentStreaks) {
-                    return
+                    return 0
                 }
             }
 
-            if (depth == r.data.length) {
+            return if (depth == r.data.length) {
                 val valid = isValid(candidate, r.counts)
                 if (valid) {
-                    v += 1
+                    return 1L
+                } else {
+                    return 0L
                 }
+
             } else {
                 val c = r.data[depth]
                 if (c == '?') {
-                    visit("$candidate.")
+                    return visit("$candidate.") +
                     visit("$candidate#")
                 } else {
-                    visit(candidate + c)
+                    return visit(candidate + c)
                 }
 
             }
         }
-        visit("")
-        return v
+        return visit("")
     }
 
     fun isValid(data: String, counts: List<Int>): Boolean {
