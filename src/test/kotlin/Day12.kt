@@ -1,7 +1,6 @@
 import org.testng.Assert.assertEquals
-import org.testng.Assert.assertTrue
 import org.testng.annotations.Test
-import java.math.BigDecimal
+import java.util.stream.Collectors
 
 class Day12 : Helpers {
 
@@ -13,53 +12,87 @@ class Day12 : Helpers {
 
     @Test
     fun part2() {
-        val unfolded = parseRecords("day12example1.txt").map { unfold(it) }
+        fun countUnfolded(filename: String): Long {
+            return parseRecords(filename).map { unfold(it) }.parallelStream().map { findValid(it) }
+                .collect(Collectors.toList()).sum()
+        }
+        assertEquals(countUnfolded("day12example1.txt"), 525152)
+        assertEquals(countUnfolded("day12.txt"), 1566786613613)
+    }
 
-        var i =0
-        val scores = unfolded.reversed().map{ it ->
-            val findValid = findValid(it)
-            println("$i: $findValid")
-            i += 1
-            findValid
+    private fun findValid(r: ConditionRecord): Long {
+        val cache = mutableMapOf<String, Long>()
 
+        // Naive DFS
+        fun visit(remaining: String, found: List<Int>): Long {
+            val cacheKey = remaining + found.hashCode()
+            val l = cache[cacheKey]
+            if (l != null) {
+                return l
+            }
+            // Check for exit condition
+            if (remaining.isEmpty()) {
+                if (found == r.counts) {
+                    return 1
+                } else {
+                    return 0
+                }
+            }
+            // Optimisations; bailing out early
+            if (found.size > r.counts.size) {
+                return 0
+            }
+            if (found.isNotEmpty() && found.last() != r.counts[found.indices.last]) {
+                return 0
+            }
+
+            var left = ""
+            var right = remaining
+            while (right.isNotEmpty()) {
+                var nextChar = right[0]
+                right = right.drop(1)
+                if (nextChar == '#') {
+                    left += '#'
+                }
+
+                if (nextChar == '.') {
+                    var newFound = mutableListOf<Int>()
+                    newFound.addAll(found)
+                    if (left.length > 0) {
+                        newFound.add(left.length)
+                    }
+                    return visit(right, newFound)
+                }
+
+                if (nextChar == '?') {
+                    var newFound = mutableListOf<Int>()
+                    newFound.addAll(found)
+                    if (left.length > 0) {
+                        newFound.add(left.length)
+                    }
+                    // The result of a branch is the sum of their individual scores
+                    val dotBranch = visit(right, newFound)
+                    val hashBranch = visit(left + '#' + right, found)
+                    val visit = dotBranch + hashBranch
+                    // Interestingly this branch is the only one which shows improvement with caching.
+                    cache[cacheKey] = visit
+                    return visit
+                }
+            }
+
+            var newFound = mutableListOf<Int>()
+            newFound.addAll(found)
+            if (left.length > 0) {
+                newFound.add(left.length)
+            }
+
+            return visit(right, newFound)
         }
 
-        val total = scores.fold(BigDecimal(0)) { acc, it ->
-            acc.add(BigDecimal(it))
-        }
-
-        assertEquals(total, BigDecimal(525152))
+        return visit(r.data, emptyList())
     }
 
-    @Test
-    fun testIsValid() {
-        assertTrue(isValid("#.#.###", listOf(1, 1, 3)))
-        assertTrue(isValid("..#..#....###.", listOf(1, 1, 3)))
-    }
-
-    @Test
-    fun testFindValid() {
-        val records = parseRecords("day12example1.txt")
-        assertEquals(findValid(records[1]), 4)
-        assertEquals(findValid(records[5]), 10)
-    }
-
-    @Test
-    fun testUnfold() {
-        assertEquals(
-            unfold(ConditionRecord(".#", listOf((1)))),
-            ConditionRecord(".#?.#?.#?.#?.#", listOf(1, 1, 1, 1, 1))
-        )
-        assertEquals(
-            unfold(ConditionRecord("???.###", listOf(1, 1, 3))), ConditionRecord(
-                "???.###????.###????.###????.###????.###", listOf(
-                    1, 1, 3, 1, 1, 3, 1, 1, 3, 1, 1, 3, 1, 1, 3
-                )
-            )
-        )
-    }
-
-    fun unfold(record: ConditionRecord): ConditionRecord {
+    private fun unfold(record: ConditionRecord): ConditionRecord {
         val data = (1..5).fold("") { acc, _ ->
             "$acc${record.data}?"
         }.dropLast(1)
@@ -68,66 +101,6 @@ class Day12 : Helpers {
             acc
         }
         return ConditionRecord(data, counts)
-    }
-
-    private fun findValid(r: ConditionRecord): Long {
-        // Naive DFS
-        fun visit(candidate: String): Long {
-            val depth = candidate.length
-
-            // Optimise by bailing on paths with incorrect steaks
-            if (depth > 0 && candidate.last() == '.') {
-                val currentStreaks: List<Int> = streaksFor(candidate)
-                if (r.counts.take(currentStreaks.size) != currentStreaks) {
-                    return 0
-                }
-            }
-
-            return if (depth == r.data.length) {
-                val valid = isValid(candidate, r.counts)
-                if (valid) {
-                    return 1L
-                } else {
-                    return 0L
-                }
-
-            } else {
-                val c = r.data[depth]
-                if (c == '?') {
-                    return visit("$candidate.") +
-                    visit("$candidate#")
-                } else {
-                    return visit(candidate + c)
-                }
-
-            }
-        }
-        return visit("")
-    }
-
-    fun isValid(data: String, counts: List<Int>): Boolean {
-        val streaks = streaksFor(data)
-        return streaks == counts
-    }
-
-    private fun streaksFor(data: String): MutableList<Int> {
-        val streaks = mutableListOf<Int>()
-        var streak = 0
-        for (i in data.indices) {
-            val c = data.get(i)
-            if (c == '#') {
-                streak += 1
-            } else {
-                if (streak > 0) {
-                    streaks.add(streak)
-                    streak = 0
-                }
-            }
-        }
-        if (streak > 0) {
-            streaks.add(streak)
-        }
-        return streaks
     }
 
     private fun parseRecords(filename: String) = stringsFromFile(filename).map { line ->
