@@ -56,23 +56,24 @@ class Day12 : Helpers {
                 }
 
                 if (nextChar == '.') {
-                    var newFound = mutableListOf<Int>()
-                    newFound.addAll(found)
-                    if (left.length > 0) {
+                    val newFound = found.toMutableList()
+                    if (left.isNotEmpty()) {
                         newFound.add(left.length)
                     }
                     return visit(right, newFound)
                 }
 
                 if (nextChar == '?') {
-                    var newFound = mutableListOf<Int>()
-                    newFound.addAll(found)
-                    if (left.length > 0) {
+                    // The result of a branch is the sum of their individual scores
+                    // Dot branch
+                    val newFound = found.toMutableList()
+                    if (left.isNotEmpty()) {
                         newFound.add(left.length)
                     }
-                    // The result of a branch is the sum of their individual scores
                     val dotBranch = visit(right, newFound)
+                    // Hash branch
                     val hashBranch = visit(left + '#' + right, found)
+
                     val visit = dotBranch + hashBranch
                     // Interestingly this branch is the only one which shows improvement with caching.
                     cache[cacheKey] = visit
