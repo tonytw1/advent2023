@@ -14,15 +14,74 @@ class Day13 : Helpers {
         assertEquals(summaries(parseMaps("day13.txt")), 37113)
     }
 
-    private fun summarise(map: Set<Point>): Int {
-        // Reduce row and columns to lists of checksums and look for mirrors in those
-        val c = findMirror(colChecksums(map))
-        val r = findMirror(rowChecksums(map))
-        return c + (100 * r)
+    @Test
+    fun part2() {
+        fun diffs(maps: List<Set<Point>>): Int {
+            return maps.map { map ->
+                findDiff(map)
+            }.sum()
+        }
+        assertEquals(diffs(parseMaps("day13example.txt")), 400)
+        assertEquals(diffs(parseMaps("day13.txt")), 30449)
     }
 
-    private fun findMirror(checkSums: List<Int>): Int{
+    private fun findDiff(map: Set<Point>): Int {
+        // Record where the mirrors where in part 1; every 1 had exactly 1 mirror
+        val co = findMirrors(colChecksums(map))
+        val ro = findMirrors(rowChecksums(map))
+
+        // For every point... look for a flip which projects to a map with a new edge
+        val width = map.map { it.x }.max()
+        val height = map.map { it.y }.max()
+        (1..height).forEach { y ->
+            (1..width).forEach { x ->
+                // Render the new map
+                val flipped = map.toMutableSet()
+                val pointToFlip = Point(y, x)
+                val contains = map.contains(pointToFlip)
+                if (contains) {
+                    flipped.remove(pointToFlip)
+                } else {
+                    flipped.add(pointToFlip)
+                }
+
+                // Find the mirrors in this new map; there may be more than 1 now!
+                val c = findMirrors(colChecksums(flipped)).toMutableList()
+                val r = findMirrors(rowChecksums(flipped)).toMutableList()
+                // Remove the part1 mirrors so only new olds are left
+                // There will be 1 new mirror left
+                c.removeAll { co.contains(it) }
+                r.removeAll { ro.contains(it) }
+                if (c.size + r.size == 1) {
+                    // Summarise the new edges
+                    val ra = r.getOrElse(0) { 0 }
+                    val ca = c.getOrElse(0) { 0 }
+                    return summaryScoreFor(ca, ra)
+                }
+            }
+        }
+        throw RuntimeException()
+    }
+
+    private fun findMirror(checkSums: List<Int>): Int {
+        val i = findMirrors(checkSums)
+        if (i.isNotEmpty()) {
+            return i.first()!!
+        } else {
+            return 0
+        }
+    }
+
+    private fun summarise(map: Set<Point>): Int {
+        // Reduce row and columns to lists of checksums and look for mirrors in those
+        return summaryScoreFor(findMirror(colChecksums(map)), findMirror(rowChecksums(map)))
+    }
+
+    private fun summaryScoreFor(columns: Int, rows: Int) = columns + (100 * rows)
+
+    private fun findMirrors(checkSums: List<Int>): List<Int> {
         val width = checkSums.size
+        val mirrors = mutableListOf<Int>()
         (0..<width).forEach { i ->
             var good = true
             var d = 0
@@ -37,16 +96,16 @@ class Day13 : Helpers {
                 r = i + 1 + d
             }
             if (good && d > 0) {
-                return i + 1
+                mirrors.add(i + 1)
             }
         }
-        return 0
+        return mirrors
     }
 
     // TODO generalise this reduction?
     private fun colChecksums(map: Set<Point>): List<Int> {
-        var width = map.map { it.x }.max()
-        var height = map.map { it.y }.max()
+        val width = map.map { it.x }.max()
+        val height = map.map { it.y }.max()
         return (1..width).map { x ->
             (1..height).sumOf { y ->
                 if (map.contains(Point(y, x))) {
@@ -57,9 +116,10 @@ class Day13 : Helpers {
             }
         }
     }
+
     private fun rowChecksums(map: Set<Point>): List<Int> {
-        var width = map.map { it.x }.max()
-        var height = map.map { it.y }.max()
+        val width = map.map { it.x }.max()
+        val height = map.map { it.y }.max()
         return (1..height).map { y ->
             (1..width).sumOf { x ->
                 if (map.contains(Point(y, x))) {
@@ -87,7 +147,7 @@ class Day13 : Helpers {
                     map.add(Point(y, x + 1))
                 }
             }
-            y +=1
+            y += 1
         }
         maps.add(map.toSet())
         return maps
@@ -95,4 +155,3 @@ class Day13 : Helpers {
 
     data class Point(val y: Int, val x: Int)
 }
-
