@@ -5,16 +5,21 @@ class Day5 : Helpers {
 
     @Test
     fun part1() {
-        val example = parseAlmanac("day5example.txt")
-        assertEquals(locationsFrom(example.seeds, example.mappings).min(), 35)
-        val actual = parseAlmanac("day5.txt")
-        assertEquals(locationsFrom(actual.seeds, actual.mappings).min(), 579439039)
+        assertEquals(lowestLocation(parseAlmanac("day5example.txt")), 35)
+        assertEquals(lowestLocation(parseAlmanac("day5.txt")), 579439039)
     }
 
     @Test
     fun part2() {
-        val almanac = parseAlmanac("day5.txt")
+        assertEquals(lowestLocationByRange(parseAlmanac("day5example.txt")), 46)
+        assertEquals(lowestLocationByRange(parseAlmanac("day5.txt")), 7873084)
+    }
 
+    fun lowestLocation(almanac: Almanac): Long {
+        return locationsFrom(almanac.seeds, almanac.mappings).min()
+    }
+
+    private fun lowestLocationByRange(almanac: Almanac): Long {
         // Build seed ranges
         // There are no obvious overlaps; no wins from merging
         val seedRanges = mutableListOf<LongRange>()
@@ -37,7 +42,7 @@ class Day5 : Helpers {
                 }
             }
         }
-        assertEquals(min, 46)
+        return min
     }
 
     private fun locationsFrom(seeds: List<Long>, mappings: List<Mapping>): List<Long> {
