@@ -6,7 +6,7 @@ class Day16 : Helpers {
 
     @Test
     fun part1() {
-        val start: Location = Location(0, 0, Pair(0, 1))
+        val start = Location(0, 0, Pair(0, 1))
         assertEquals(countEnergised(parseMap("day16example.txt"), start), 46)
         assertEquals(countEnergised(parseMap("day16.txt"), start), 7067)
     }
@@ -21,8 +21,8 @@ class Day16 : Helpers {
         val map = parseMap(filename)
 
         // Generate possible entry points
-        val maxX = map.map { it.x }.max()
-        val maxY = map.map { it.y }.max()
+        val maxX = map.maxX()
+        val maxY = map.maxY()
 
         val verticalEntries = (0..maxX).flatMap { x ->
             listOf(
@@ -43,9 +43,9 @@ class Day16 : Helpers {
         return results.max()
     }
 
-    fun countEnergised(map: Set<Point>, start: Location): Int {
-        val maxX = map.map { it.x }.max()
-        val maxY = map.map { it.y }.max()
+    fun countEnergised(map: Map, start: Location): Int {
+        val maxX = map.maxX()
+        val maxY = map.maxY()
 
         // Record visit squares and the direction to visitation; this lets us know when we are entering a loop
         val visited = mutableSetOf<Location>()
@@ -63,10 +63,7 @@ class Day16 : Helpers {
                 var x = l.x
                 var dir = l.dir
 
-                val currentPoint =
-                    map.find { it.y == y && it.x == x }!! // TODO Not a great data structure for this but fear of part2
-
-                when (currentPoint.c) {
+                when (map.charAt(y, x)) {
                     '/' -> dir = Pair(-dir.second, -dir.first)
                     '\\' -> dir = Pair(dir.second, dir.first)
                     '|' -> {
@@ -77,6 +74,7 @@ class Day16 : Helpers {
                             dir = Pair(-dir.second, 0)
                         }
                     }
+
                     '-' -> {
                         if (dir.first != 0) {
                             // One turns the other way and is queued
@@ -99,15 +97,26 @@ class Day16 : Helpers {
         return visited.map { Pair(it.y, it.x) }.toSet().size
     }
 
-    private fun parseMap(filename: String): Set<Point> {
-        return stringsFromFile(filename).withIndex().flatMap { line ->
+    private fun parseMap(filename: String): Map {
+        return Map(stringsFromFile(filename).withIndex().flatMap { line ->
             line.value.toCharArray().withIndex().map { c ->
                 Point(line.index, c.index, c.value)
             }
-        }.toSet()
+        }.toSet())
     }
 
     data class Location(val y: Int, val x: Int, val dir: Pair<Int, Int>)
     data class Point(val y: Int, val x: Int, val c: Char)
-    data class Visit(val point: Point, val dir: Pair<Int, Int>)
+
+    class Map(val points: Set<Point>) {
+        fun maxX(): Int {
+            return points.map { it.x }.max()
+        }
+        fun maxY(): Int {
+            return points.map { it.y }.max()
+        }
+        fun charAt(y: Int, x: Int): Char {
+            return points.find { it.y == y && it.x == x }!!.c // TODO Not a great data structure for this but fear of part2
+        }
+    }
 }
