@@ -1,6 +1,5 @@
 import org.testng.Assert.assertEquals
 import org.testng.annotations.Test
-import java.util.stream.Collectors
 
 class Day16 : Helpers {
 
@@ -21,19 +20,16 @@ class Day16 : Helpers {
         val map = parseMap(filename)
 
         // Generate possible entry points
-        val maxX = map.maxX()
-        val maxY = map.maxY()
-
-        val verticalEntries = (0..maxX).flatMap { x ->
+        val verticalEntries = (0..map.maxX()).flatMap { x ->
             listOf(
                 Location(0, x, Pair(1, 0)),
-                Location(maxY, x, Pair(-1, 0))
+                Location(map.maxY(), x, Pair(-1, 0))
             )
         }
-        val horizontalEntries = (0..maxY).flatMap { y ->
+        val horizontalEntries = (0..map.maxY()).flatMap { y ->
             listOf(
                 Location(y, 0, Pair(0, 1)),
-                Location(y, maxX, Pair(0, -1))
+                Location(y, map.maxX(), Pair(0, -1))
             )
         }
 
@@ -43,10 +39,7 @@ class Day16 : Helpers {
         return results.max()
     }
 
-    fun countEnergised(map: Map, start: Location): Int {
-        val maxX = map.maxX()
-        val maxY = map.maxY()
-
+    private fun countEnergised(map: Map, start: Location): Int {
         // Record visit squares and the direction to visitation; this lets us know when we are entering a loop
         val visited = mutableSetOf<Location>()
 
@@ -58,7 +51,7 @@ class Day16 : Helpers {
             var l = queue.removeFirst()
 
             // Loop until we leave the map or encounter a previously explored trace
-            while ((l.x in (0..maxX)) && (l.y in (0..maxY)) && !visited.contains(l)) {
+            while ((l.x in (0..map.maxX())) && (l.y in (0..map.maxY())) && !visited.contains(l)) {
                 var y = l.y
                 var x = l.x
                 var dir = l.dir
