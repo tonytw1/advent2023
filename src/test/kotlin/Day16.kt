@@ -37,9 +37,9 @@ class Day16 : Helpers {
             )
         }
 
-        val results = (verticalEntries + horizontalEntries).parallelStream().map { start ->
+        val results = (verticalEntries + horizontalEntries).map { start ->
             countEnergised(map, start)
-        }.collect(Collectors.toList())
+        }
         return results.max()
     }
 
