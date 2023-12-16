@@ -13,7 +13,7 @@ class Day16 : Helpers {
 
     @Test
     fun part2() {
-        //assertEquals(bestPossibleEnergised("day16example.txt"), 51)
+        assertEquals(bestPossibleEnergised("day16example.txt"), 51)
         assertEquals(bestPossibleEnergised("day16.txt"), 7324)
     }
 
@@ -68,18 +68,18 @@ class Day16 : Helpers {
                     '\\' -> dir = Pair(dir.second, dir.first)
                     '|' -> {
                         if (dir.second != 0) {
-                            // One turns the other way and is queued
+                            // One turns and is queued
                             queue.add(l.copy(dir = Pair(dir.second, 0)))
-                            // One turns and continues
+                            // One turns the other way and continues
                             dir = Pair(-dir.second, 0)
                         }
                     }
 
                     '-' -> {
                         if (dir.first != 0) {
-                            // One turns the other way and is queued
+                            // One turns and is queued
                             queue.add(l.copy(dir = Pair(0, dir.first)))
-                            // One turns  and continues
+                            // One turns the other way and continues
                             dir = Pair(0, -dir.first)
                         }
                     }
@@ -109,18 +109,15 @@ class Day16 : Helpers {
     data class Point(val y: Int, val x: Int, val c: Char)
 
     class Map(private var points: Set<Point>) {
-        private val maxX: Int
-        private val maxY: Int
-        private val ps: Array<Array<Char>>
+        private val maxX: Int = points.map { it.x }.max()
+        private val maxY: Int = points.map { it.y }.max()
+        private val ps: Array<Array<Char>> = Array(this.maxY + 1) {
+            Array(this.maxX + 1) {
+                '.'
+            }
+        }
 
         init {
-            this.maxX = points.map { it.x }.max()
-            this.maxY = points.map { it.y }.max()
-            this.ps = Array(this.maxY + 1) {
-                Array(this.maxX + 1) {
-                    '.'
-                }
-            }
             points.forEach { it ->
                 ps[it.y][it.x] = it.c
             }
