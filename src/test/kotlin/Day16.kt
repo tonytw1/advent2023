@@ -1,15 +1,49 @@
 import org.testng.Assert.assertEquals
 import org.testng.annotations.Test
+import java.util.stream.Collectors
 
 class Day16 : Helpers {
 
     @Test
     fun part1() {
-        assertEquals(countEnergised(parseMap("day16example.txt")), 46)
-        assertEquals(countEnergised(parseMap("day16.txt")), 7067)
+        val start: Location = Location(0, 0, Pair(0, 1))
+        assertEquals(countEnergised(parseMap("day16example.txt"), start), 46)
+        assertEquals(countEnergised(parseMap("day16.txt"), start), 7067)
     }
 
-    fun countEnergised(map: Set<Point>): Int {
+    @Test
+    fun part2() {
+        assertEquals(bestPossibleEnergised("day16example.txt"), 51)
+        assertEquals(bestPossibleEnergised("day16.txt"), 7324)
+    }
+
+    private fun bestPossibleEnergised(filename: String): Int {
+        val map = parseMap(filename)
+
+        // Generate possible entry points
+        val maxX = map.map { it.x }.max()
+        val maxY = map.map { it.y }.max()
+
+        val verticalEntries = (0..maxX).flatMap { x ->
+            listOf(
+                Location(0, x, Pair(1, 0)),
+                Location(maxY, x, Pair(-1, 0))
+            )
+        }
+        val horizontalEntries = (0..maxY).flatMap { y ->
+            listOf(
+                Location(y, 0, Pair(0, 1)),
+                Location(y, maxX, Pair(0, -1))
+            )
+        }
+
+        val results = (verticalEntries + horizontalEntries).parallelStream().map { start ->
+            countEnergised(map, start)
+        }.collect(Collectors.toList())
+        return results.max()
+    }
+
+    fun countEnergised(map: Set<Point>, start: Location): Int {
         val maxX = map.map { it.x }.max()
         val maxY = map.map { it.y }.max()
 
@@ -18,7 +52,7 @@ class Day16 : Helpers {
 
         // Queue paths to explore
         val queue = ArrayDeque<Location>()
-        queue.add(Location(0, 0, Pair(0, 1)))
+        queue.add(start)
 
         while (queue.isNotEmpty()) {
             var l = queue.removeFirst()
@@ -43,7 +77,6 @@ class Day16 : Helpers {
                             dir = Pair(-dir.second, 0)
                         }
                     }
-
                     '-' -> {
                         if (dir.first != 0) {
                             // One turns the other way and is queued
