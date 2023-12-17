@@ -3,7 +3,7 @@ import org.testng.annotations.Test
 import java.util.*
 
 
-private const val maxStraightLine = 4
+private const val maxStraightLine = 3
 
 class Day17 : Helpers {
 
@@ -11,7 +11,7 @@ class Day17 : Helpers {
     fun part1() {
         // Build a graph of the network with an adj graph which ignores the dynamics of the carts
         // Parse the input into an array for starters
-        val filename = "day17.txt"
+        val filename = "day17example.txt"
         val input = readInputToArray(filename)
 
         // Translate this into a traditional adj graph
@@ -27,7 +27,7 @@ class Day17 : Helpers {
             }.toTypedArray()
         }.toTypedArray()
 
-        val adjMap2 = mutableMapOf<Node, List<Node>>()
+        val adjMap = mutableMapOf<Node, List<Node>>()
         (0..maxY).forEach { y ->
             (0..maxX).forEach { x ->
                 val node = nodes[y][x]
@@ -37,29 +37,7 @@ class Day17 : Helpers {
                 val horizontal = (listOf(x - 1, 0).max()..listOf(x + 1, maxY).min()).map { ax ->
                     nodes[y][ax]
                 }
-                adjMap2[node] = (vertical + horizontal).filter { it != node }
-            }
-        }
-
-        // Expand the adj map with fake nodes representing all possible arrivals
-        val adjExpandedMap: MutableMap<Node, List<Arrival>> = mutableMapOf<Node, List<Arrival>>()
-        (0..maxY).forEach { y ->
-            (0..maxX).forEach { x ->
-                val node = nodes[y][x]
-                val vertical = (listOf(y - 1, 0).max()..listOf(y + 1, maxY).min()).map { ay ->
-                    nodes[ay][x]
-                }
-                val horizontal = (listOf(x - 1, 0).max()..listOf(x + 1, maxY).min()).map { ax ->
-                    nodes[y][ax]
-                }
-                val adjNodes  = (vertical + horizontal).filter { it != node}.flatMap { an: Node ->
-                    (0..maxStraightLine).flatMap { d ->
-                        listOf(
-                            Arrival(an, Pair(an.y - node.y, an.x - node.x), d)  // TODO check
-                        )
-                    }
-                }
-                adjExpandedMap[node] = adjNodes
+                adjMap[node] = (vertical + horizontal).filter { it != node }
             }
         }
 
@@ -79,8 +57,8 @@ class Day17 : Helpers {
         
         queue.add(startingEast)
 
-        fun nodeAhead(node: Node, dir: Pair<Int, Int>) = adjExpandedMap[node]!!.find { an ->
-            an.node.y == node.y + dir.first && an.node.x == node.x + dir.second
+        fun nodeAhead(node: Node, dir: Pair<Int, Int>) = adjMap[node]!!.find { an ->
+            an.y == node.y + dir.first && an.x == node.x + dir.second
         }
 
         fun possibleNextDestinations(current: Arrival): List<Arrival> {
@@ -91,7 +69,7 @@ class Day17 : Helpers {
                 // If we have remaining dist them forward is available
                 val fwd = nodeAhead(current.node, dir)
                 if (fwd != null) {
-                    next.add(Arrival(node = fwd.node, dir = dir, remainingDist = dist -1 ))
+                    next.add(Arrival(node = fwd, dir = dir, remainingDist = dist -1 ))
                 }
             }
 
@@ -99,13 +77,13 @@ class Day17 : Helpers {
             val left = Pair(dir.second, dir.first)
             val leftNode = nodeAhead(current.node, left)
             if (leftNode != null) {
-                next.add(Arrival(node = leftNode.node, dir = left, remainingDist = maxStraightLine))
+                next.add(Arrival(node = leftNode, dir = left, remainingDist = maxStraightLine))
             }
 
             val right = Pair(-dir.second, dir.first)
             val rightNode = nodeAhead(current.node, right)
             if (rightNode != null) {
-                next.add(Arrival(node = rightNode.node, dir = right, remainingDist = maxStraightLine))
+                next.add(Arrival(node = rightNode, dir = right, remainingDist = maxStraightLine))
             }
             return next.filter { it != current }
         }
