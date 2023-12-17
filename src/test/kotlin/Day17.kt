@@ -39,12 +39,12 @@ class Day17 : Helpers {
         }
 
         // From the starting point we could do a traditional least distance build out is the step size always 1
-        // Doing that then relax the ad node and lowest path to node definations might work
         val start = nodes[0][0]
         val end = nodes[maxY][maxX]
 
-        val visited = mutableSetOf<Node>()
-        val distanceTo = mutableMapOf<Node, Int>()
+        val visited = mutableSetOf<Node>()  // TODO this will be expanded to account for different arrive at the node options
+
+        val distanceTo = mutableMapOf<Node, Int>()  // TODO this will be change depending on how you arrive
         adjMap.keys.forEach { distanceTo[it] = Int.MAX_VALUE }
         distanceTo[start] = 0
 
@@ -53,7 +53,9 @@ class Day17 : Helpers {
         while (queue.isNotEmpty()) {
             val current = queue.removeFirst()
 
-            adjMap[current]!!.forEach { adjNode ->
+            val availableNextSteps = adjMap[current]!!  // TODO this will be expanded to fit the problems
+
+            availableNextSteps.forEach { adjNode ->
                 if (!visited.contains(adjNode)) {
                     val costToNode = distanceTo[current]!! + adjNode.cost
                     if (distanceTo[adjNode]!! > costToNode) {
@@ -63,7 +65,7 @@ class Day17 : Helpers {
             }
             visited.add(current)
 
-            adjMap[current]!!.sortedBy { adjNode ->
+            availableNextSteps.sortedBy { adjNode ->
                 distanceTo[adjNode]!!
             }.filter { !visited.contains(it) }.forEach {
                 queue.add(it)
@@ -85,6 +87,5 @@ class Day17 : Helpers {
     }
 
 }
-
 
 data class Node(val id: Int, val cost: Int, val y: Int, val x: Int)
