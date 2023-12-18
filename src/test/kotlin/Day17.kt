@@ -3,14 +3,15 @@ import org.testng.annotations.Test
 import java.util.*
 
 
-private const val maxStraightLine = 3
+private const val maxStraightLine = 10
 
 class Day17 : Helpers {
 
     @Test
-    fun part1() {
-        assertEquals(bestPath("day17example.txt"), 102)
-        assertEquals(bestPath("day17.txt"), 817)
+    fun part2() {
+        assertEquals(bestPath("day17example.txt"), 94)
+        assertEquals(bestPath("day17example2.txt"), 71)
+        assertEquals(bestPath("day17.txt"), 925)
     }
 
     private fun bestPath(filename: String): Int {
@@ -36,7 +37,7 @@ class Day17 : Helpers {
                 val vertical = (listOf(y - 1, 0).max()..listOf(y + 1, maxY).min()).map { ay ->
                     nodes[ay][x]
                 }
-                val horizontal = (listOf(x - 1, 0).max()..listOf(x + 1, maxY).min()).map { ax ->
+                val horizontal = (listOf(x - 1, 0).max()..listOf(x + 1, maxX).min()).map { ax ->
                     nodes[y][ax]
                 }
                 adjMap[node] = (vertical + horizontal).filter { it != node }
@@ -75,17 +76,18 @@ class Day17 : Helpers {
                 }
             }
 
-            // Left and right a always available
-            val left = Pair(dir.second, -dir.first)
-            val leftNode = nodeAhead(current.node, left)
-            if (leftNode != null) {
-                next.add(Arrival(node = leftNode, dir = left, distanceInStraightLine = 1))
-            }
+            if (dist >= 4) {
+                val left = Pair(dir.second, -dir.first)
+                val leftNode = nodeAhead(current.node, left)
+                if (leftNode != null) {
+                    next.add(Arrival(node = leftNode, dir = left, distanceInStraightLine = 1))
+                }
 
-            val right = Pair(-dir.second, dir.first)
-            val rightNode = nodeAhead(current.node, right)
-            if (rightNode != null) {
-                next.add(Arrival(node = rightNode, dir = right, distanceInStraightLine = 1))
+                val right = Pair(-dir.second, dir.first)
+                val rightNode = nodeAhead(current.node, right)
+                if (rightNode != null) {
+                    next.add(Arrival(node = rightNode, dir = right, distanceInStraightLine = 1))
+                }
             }
             return next.filter { it != current }
         }
@@ -106,7 +108,8 @@ class Day17 : Helpers {
         }
 
         val end = nodes[maxY][maxX]
-        return distanceTo.filter { it.key.node == end }.map { it.value }.min()
+        val filter = distanceTo.filter { it.key.node == end && it.key.distanceInStraightLine >= 4}
+        return filter.map { it.value }.min()
     }
 
     private fun readInputToArray(filename: String): Array<Array<Int>> {
