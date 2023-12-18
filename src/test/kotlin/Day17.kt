@@ -3,7 +3,7 @@ import org.testng.annotations.Test
 import java.util.*
 
 
-private const val maxStraightLine = 3
+private const val maxStraightLine = 2
 
 class Day17 : Helpers {
 
@@ -74,7 +74,7 @@ class Day17 : Helpers {
             }
 
             // Left and right a always available
-            val left = Pair(dir.second, dir.first)
+            val left = Pair(dir.second, -dir.first)
             val leftNode = nodeAhead(current.node, left)
             if (leftNode != null) {
                 next.add(Arrival(node = leftNode, dir = left, remainingDist = maxStraightLine))
