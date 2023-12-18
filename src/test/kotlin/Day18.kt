@@ -56,7 +56,8 @@ class Day18 : Helpers {
             }
 
             nearby.forEach {
-                if (!wall.contains(it) && !outside.contains(it) && !queue.contains(it)) {
+                if (!wall.contains(it) && !outside.contains(it)) {
+                    outside.add(it)
                     queue.add(it)
                 }
             }
