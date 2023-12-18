@@ -9,9 +9,11 @@ class Day17 : Helpers {
 
     @Test
     fun part1() {
-        // Build a graph of the network with an adj graph which ignores the dynamics of the carts
-        // Parse the input into an array for starters
-        val filename = "day17example.txt"
+        assertEquals(bestPath("day17example.txt"), 102)
+        assertEquals(bestPath("day17.txt"), 817)
+    }
+
+    private fun bestPath(filename: String): Int {
         val input = readInputToArray(filename)
 
         // Translate this into a traditional adj graph
@@ -43,19 +45,19 @@ class Day17 : Helpers {
 
         val start = nodes[0][0]
         // There are 2 starting points to enqueue; 0,0 heading east, and 0,0 heading south; both with full distance available
-        val startingEast = Arrival(start, Pair(0, 1), 0)
+        val startingEast = Arrival(start, Pair(0, 1), 1)
+        val startingSouth = Arrival(start, Pair(1, 0), 1)
 
         val visited = mutableSetOf<Arrival>()  // Arrivals which have already been explored
 
         val distanceTo = mutableMapOf<Arrival, Int>()  // TODO this will be change depending on how you arrive
         distanceTo[startingEast] = 0
-
-        // Node arrivals to explore next
+        distanceTo[startingSouth] = 0
 
         val byClosestFirst: Comparator<Arrival> = compareBy { distanceTo.getOrDefault(it, Int.MAX_VALUE) }
         val queue = PriorityQueue<Arrival>(byClosestFirst)
-        
         queue.add(startingEast)
+        queue.add(startingSouth)
 
         fun nodeAhead(node: Node, dir: Pair<Int, Int>) = adjMap[node]!!.find { an ->
             an.y == node.y + dir.first && an.x == node.x + dir.second
@@ -69,7 +71,7 @@ class Day17 : Helpers {
                 // If we have remaining dist them forward is available
                 val fwd = nodeAhead(current.node, dir)
                 if (fwd != null) {
-                    next.add(Arrival(node = fwd, dir = dir, remainingDist = dist -1 ))
+                    next.add(Arrival(node = fwd, dir = dir, remainingDist = dist - 1))
                 }
             }
 
@@ -87,7 +89,7 @@ class Day17 : Helpers {
             }
             return next.filter { it != current }
         }
-        
+
         while (queue.isNotEmpty()) {
             val current = queue.poll()
             val availableNextSteps = possibleNextDestinations(current)
@@ -104,14 +106,9 @@ class Day17 : Helpers {
         }
 
         val end = nodes[maxY][maxX]
-        val filter = distanceTo.filter { it.key.node == end }.map { it.value }
-        println(filter)
-        // 856 is too high
-        // 852 is too high
-        // 821 is too high
-        assertEquals(filter.min(), 102)
+        return distanceTo.filter { it.key.node == end }.map { it.value }.min()
     }
-    
+
     private fun readInputToArray(filename: String): Array<Array<Int>> {
         return stringsFromFile(filename).withIndex().map { line ->
             val map = line.value.toCharArray().withIndex().map { c ->
@@ -121,7 +118,6 @@ class Day17 : Helpers {
             toTypedArray
         }.toTypedArray()
     }
-
 }
 
 data class Arrival(val node: Node, val dir: Pair<Int, Int>, val remainingDist: Int)
