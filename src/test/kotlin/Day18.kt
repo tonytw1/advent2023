@@ -30,76 +30,41 @@ class Day18 : Helpers {
             }
         }
 
-        // Find a block which is inside the wall; no hint about of the loop is clock wise or on though
-        // Is the pool continuous or are there pitch points?
-        // Probably best to fill all regions and then decide if there are internal or external after the fact.
-
         // Ring fence the problem; allow space around the edge
         val minY = wall.map { it.y }.min() - 1
         val maxY = wall.map { it.y }.max() + 1
         val minX = wall.map { it.x }.min() - 1
         val maxX = wall.map { it.x }.max() + 1
 
-        // Determine all the available points
-        val unfilled = mutableSetOf<Point>()
-        (minY..maxY).forEach { y ->
-            (minX..maxX).forEach { x ->
-                val p = Point(y, x)
-                if (!wall.contains(p)) {
-                    unfilled.add(p)
+        // Flood file from outside
+        val outside = mutableSetOf<Point>()
+        val queue = ArrayDeque<Point>()
+        val seed = Point(minY, minX)
+        queue.add(seed)
+
+        while (queue.isNotEmpty()) {
+            val p = queue.removeFirst()
+            outside.add(p)
+
+            val nearby = listOf(
+                Point(p.y - 1, p.x),
+                Point(p.y + 1, p.x),
+                Point(p.y, p.x - 1),
+                Point(p.y, p.x + 1)
+            ).filter { p ->
+                (p.y in minY..maxY) && (p.x in minX..maxX)
+            }
+
+            nearby.forEach {
+                if (!wall.contains(it) && !outside.contains(it) && !queue.contains(it)) {
+                    queue.add(it)
                 }
             }
+
         }
 
-        // Take an unfilled point and flood fill from it.
-        // Repeat until all points are filled.
-        val regions = mutableSetOf<Set<Point>>()
-
-        while (unfilled.isNotEmpty()) {
-            val region = mutableSetOf<Point>()
-            val queue = ArrayDeque<Point>()
-
-            val seed = unfilled.first()
-            queue.add(seed)
-
-            while (queue.isNotEmpty()) {
-                val p = queue.removeFirst()
-
-                region.add(p)
-                unfilled.remove(p)
-
-                val nearby = listOf(
-                    Point(p.y - 1, p.x),
-                    Point(p.y + 1, p.x),
-                    Point(p.y, p.x - 1),
-                    Point(p.y, p.x + 1)
-                )
-
-                nearby.forEach {
-                    if (unfilled.contains(it)) {
-                        queue.add(it)
-                        unfilled.remove(it)
-                    }
-                }
-                // Queue all of out unfilled neighbours
-                queue.addAll(
-                    nearby.filter {
-                        unfilled.contains(it)
-                    })
-            }
-            regions.add(region)
-        }
-
-        // Filter the regions to find internal regions; external regions touch the border of the game
-        val internalRegions = regions.filter { region: Set<Point> ->
-            val none = region.none { p: Point ->
-                listOf(minY, maxY).contains(p.y) || listOf(minX, maxX).contains(p.x)
-            }
-            none
-        }
-
-        val enclosed = internalRegions.sumOf { it.size }
-        return enclosed + wall.size
+        val area = ((maxY - minY) + 1) * ((maxX - minX) + 1)
+        return area - outside.size
     }
 
     data class Point(val y: Int, val x: Int)
