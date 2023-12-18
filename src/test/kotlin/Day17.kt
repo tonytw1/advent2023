@@ -3,7 +3,7 @@ import org.testng.annotations.Test
 import java.util.*
 
 
-private const val maxStraightLine = 2
+private const val maxStraightLine = 3
 
 class Day17 : Helpers {
 
@@ -65,13 +65,13 @@ class Day17 : Helpers {
 
         fun possibleNextDestinations(current: Arrival): List<Arrival> {
             val next = mutableListOf<Arrival>()
-            val dist = current.remainingDist
+            val dist = current.distanceInStraightLine
             val dir = current.dir
-            if (dist > 0) {
+            if (dist < maxStraightLine) {
                 // If we have remaining dist them forward is available
                 val fwd = nodeAhead(current.node, dir)
                 if (fwd != null) {
-                    next.add(Arrival(node = fwd, dir = dir, remainingDist = dist - 1))
+                    next.add(Arrival(node = fwd, dir = dir, distanceInStraightLine = dist + 1))
                 }
             }
 
@@ -79,13 +79,13 @@ class Day17 : Helpers {
             val left = Pair(dir.second, -dir.first)
             val leftNode = nodeAhead(current.node, left)
             if (leftNode != null) {
-                next.add(Arrival(node = leftNode, dir = left, remainingDist = maxStraightLine))
+                next.add(Arrival(node = leftNode, dir = left, distanceInStraightLine = 1))
             }
 
             val right = Pair(-dir.second, dir.first)
             val rightNode = nodeAhead(current.node, right)
             if (rightNode != null) {
-                next.add(Arrival(node = rightNode, dir = right, remainingDist = maxStraightLine))
+                next.add(Arrival(node = rightNode, dir = right, distanceInStraightLine = 1))
             }
             return next.filter { it != current }
         }
@@ -120,6 +120,6 @@ class Day17 : Helpers {
     }
 }
 
-data class Arrival(val node: Node, val dir: Pair<Int, Int>, val remainingDist: Int)
+data class Arrival(val node: Node, val dir: Pair<Int, Int>, val distanceInStraightLine: Int)
 
 data class Node(val id: Int, val cost: Int, val y: Int, val x: Int)
