@@ -3,33 +3,37 @@ import org.testng.annotations.Test
 import java.util.*
 
 
-private const val maxStraightLine = 10
-
 class Day17 : Helpers {
 
     @Test
-    fun part2() {
-        assertEquals(bestPath("day17example.txt"), 94)
-        assertEquals(bestPath("day17example2.txt"), 71)
-        assertEquals(bestPath("day17.txt"), 925)
+    fun part1() {
+        val maxStraightLine = 3
+        assertEquals(bestPath("day17example.txt", maxStraightLine, 0), 102)
+        assertEquals(bestPath("day17.txt", maxStraightLine, 0), 817)
     }
 
-    private fun bestPath(filename: String): Int {
+    @Test
+    fun part2() {
+        val maxStraightLine = 10
+        val minStraightLne = 4
+        assertEquals(bestPath("day17example.txt", maxStraightLine, minStraightLne), 94)
+        assertEquals(bestPath("day17example2.txt", maxStraightLine, minStraightLne), 71)
+        assertEquals(bestPath("day17.txt", maxStraightLine, minStraightLne), 925)
+    }
+
+    private fun bestPath(filename: String, maxStraightLine: Int, minStraightLne: Int): Int {
         val input = readInputToArray(filename)
 
-        // Translate this into a traditional adj graph
-        // Build nodes
+        // Translate array of costs into a traditional adj graph
+        // First to an array of nodes; can probably remove this step
         val maxY = input.size - 1
         val maxX = input[0].size - 1
-        var nodeId = 0
-
         val nodes = input.withIndex().map { row ->
             row.value.withIndex().map { c ->
-                nodeId += 1
-                Node(nodeId, c.value, row.index, c.index)
+                Node(c.value, row.index, c.index)
             }.toTypedArray()
         }.toTypedArray()
-
+        // Then to adj map
         val adjMap = mutableMapOf<Node, List<Node>>()
         (0..maxY).forEach { y ->
             (0..maxX).forEach { x ->
@@ -44,27 +48,28 @@ class Day17 : Helpers {
             }
         }
 
+        // Setup for a least distance; the key is not just nodes; it's node + direction + remaining straight line
+        val visited = mutableSetOf<Arrival>()  // Arrivals which have already been explored
+        val distanceTo = mutableMapOf<Arrival, Int>()
+
+        // Start at top left
+        // There are 2 starting tracks to enqueue; heading east, heading south; both with 1 square already placed
         val start = nodes[0][0]
-        // There are 2 starting points to enqueue; 0,0 heading east, and 0,0 heading south; both with full distance available
         val startingEast = Arrival(start, Pair(0, 1), 1)
         val startingSouth = Arrival(start, Pair(1, 0), 1)
-
-        val visited = mutableSetOf<Arrival>()  // Arrivals which have already been explored
-
-        val distanceTo = mutableMapOf<Arrival, Int>()  // TODO this will be change depending on how you arrive
         distanceTo[startingEast] = 0
         distanceTo[startingSouth] = 0
 
         val byClosestFirst: Comparator<Arrival> = compareBy { distanceTo.getOrDefault(it, Int.MAX_VALUE) }
-        val queue = PriorityQueue<Arrival>(byClosestFirst)
+        val queue = PriorityQueue(byClosestFirst)
         queue.add(startingEast)
         queue.add(startingSouth)
 
-        fun nodeAhead(node: Node, dir: Pair<Int, Int>) = adjMap[node]!!.find { an ->
-            an.y == node.y + dir.first && an.x == node.x + dir.second
-        }
-
         fun possibleNextDestinations(current: Arrival): List<Arrival> {
+            fun nodeAhead(node: Node, dir: Pair<Int, Int>) = adjMap[node]!!.find { an ->
+                an.y == node.y + dir.first && an.x == node.x + dir.second
+            }
+
             val next = mutableListOf<Arrival>()
             val dist = current.distanceInStraightLine
             val dir = current.dir
@@ -75,14 +80,12 @@ class Day17 : Helpers {
                     next.add(Arrival(node = fwd, dir = dir, distanceInStraightLine = dist + 1))
                 }
             }
-
-            if (dist >= 4) {
+            if (dist >= minStraightLne) {
                 val left = Pair(dir.second, -dir.first)
                 val leftNode = nodeAhead(current.node, left)
                 if (leftNode != null) {
                     next.add(Arrival(node = leftNode, dir = left, distanceInStraightLine = 1))
                 }
-
                 val right = Pair(-dir.second, dir.first)
                 val rightNode = nodeAhead(current.node, right)
                 if (rightNode != null) {
@@ -92,6 +95,7 @@ class Day17 : Helpers {
             return next.filter { it != current }
         }
 
+        // Normal least distance algo
         while (queue.isNotEmpty()) {
             val current = queue.poll()
             val availableNextSteps = possibleNextDestinations(current)
@@ -108,8 +112,8 @@ class Day17 : Helpers {
         }
 
         val end = nodes[maxY][maxX]
-        val filter = distanceTo.filter { it.key.node == end && it.key.distanceInStraightLine >= 4}
-        return filter.map { it.value }.min()
+        val validEndings = distanceTo.filter { it.key.node == end && it.key.distanceInStraightLine >= minStraightLne }
+        return validEndings.map { it.value }.min()
     }
 
     private fun readInputToArray(filename: String): Array<Array<Int>> {
@@ -125,4 +129,4 @@ class Day17 : Helpers {
 
 data class Arrival(val node: Node, val dir: Pair<Int, Int>, val distanceInStraightLine: Int)
 
-data class Node(val id: Int, val cost: Int, val y: Int, val x: Int)
+data class Node(val cost: Int, val y: Int, val x: Int)
