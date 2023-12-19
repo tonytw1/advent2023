@@ -47,11 +47,10 @@ class Day18 : Helpers {
     }
 
     private fun capacityUsingSquares(steps: List<Step>): Long {
-        // Trace out the wall recording the sequence of corners
+        // Trace out the wall recording the sequence of corner vertices
         // Corners are easy but we really want the vertices at the corners of the squares
         // If the loop is clockwise the external vertice can be inferred from tangents
 
-        val corners = mutableListOf<Point>()
         val vertices = mutableListOf<Point>()
 
         var pos = Point(0L, 0L)
@@ -64,7 +63,6 @@ class Day18 : Helpers {
             val newPos = Point(pos.y + (dir.first * delta), pos.x + (dir.second * delta))
             val newTangent = Pair(-dir.second, dir.first)
             if (currentDir != null && dir != currentDir) {
-                corners.add(pos)
                 // Assume clock wise; use tangents before and after turn to throw a vertice in the correct direction
                 val dy = Math.max(tangent!!.first + newTangent.first, 0)
                 val dx = Math.max(tangent!!.second + newTangent.second, 0)
