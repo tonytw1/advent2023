@@ -23,10 +23,7 @@ class Day18 : Helpers {
             return stringsFromFile(filename).map { line ->
                 val split = line.split(" ")
                 val hex = split[2]
-                println(hex)
-                val hex1 = hex.drop(2).dropLast(2)
-                println(hex1)
-                val delta = hexToInt(hex1)
+                val delta = hexToInt(hex.drop(2).dropLast(2))
                 val dirChar = when (hex.dropLast(1).last()) {
                     '0' -> 'R'
                     '1' -> 'D'
@@ -108,7 +105,7 @@ class Day18 : Helpers {
                 val linesToLeftOf = verticalLines.filter {
                     it.x <= right && it.y1 <= top && it.y2 >= bottom
                 }
-                area * (linesToLeftOf.size % 2)//
+                area * (linesToLeftOf.size % 2)
             }
         }.sum()
     }
