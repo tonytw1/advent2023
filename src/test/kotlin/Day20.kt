@@ -8,14 +8,12 @@ class Day20 : Helpers {
 
     @Test
     fun part1() {
-        assertEquals(runSimulation("day20example.txt"), 32000000)
-        assertEquals(runSimulation("day20example2.txt"), 11687500)
-        assertEquals(runSimulation("day20example2.txt"), 919383692)
+        assertEquals(runSimulation(parseModulesFrom("day20example.txt")), 32000000)
+        assertEquals(runSimulation(parseModulesFrom("day20example2.txt")), 11687500)
+        assertEquals(runSimulation(parseModulesFrom("day20.txt")), 919383692)
     }
 
-    private fun runSimulation(filename: String): Int {
-        val modules = parseModulesFrom(filename)
-
+    private fun runSimulation(modules: Map<String, Module>): Int {
         var lowCount = 0
         var highCount = 0
         val queue = ArrayDeque<Message>()
@@ -52,7 +50,6 @@ class Day20 : Helpers {
         val withoutUpstream = stringsFromFile(filename).map { line ->
             val split = line.split(" ")
             val typeAndName = split[0]
-            println(line)
             val s = line.split(" -> ")[1]
             val downStream = s.split(", ")
             if (typeAndName.startsWith('%') || typeAndName.startsWith('&')) {
@@ -92,7 +89,6 @@ class Day20 : Helpers {
                     if (message.value == HIGH) {
                         return emptyList()
                     }
-                    //println("$id $state")
                     return if (!state) {
                         state = true
                         downStream.map { dsm ->
