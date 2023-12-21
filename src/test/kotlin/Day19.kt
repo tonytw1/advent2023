@@ -16,7 +16,7 @@ class Day19 : Helpers {
         assertEquals(numberOfValidParts(parseSystem("day19.txt")), 130745440937650L)
     }
 
-    private fun runAndCountAccepted(system: System): Int {
+    private fun runAndCountAccepted(system: System): Int {  // TODO part 2 can be used to replace this.
         val workFlowsByName = system.workflows.associateBy { it.id }
 
         fun eval(workflow: Workflow, part: Part): String {
