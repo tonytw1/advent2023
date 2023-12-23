@@ -72,24 +72,25 @@ class Day21 : Helpers {
         }
 
         visit(garden.start, range)
-
-        (garden.minX..garden.maxX).forEach { y->
-           val l = (garden.minX..garden.maxX).map { x ->
-               val p = Point(y, x)
-               if (endPoints.contains(p)) {
-                   'O'
-               } else if (garden.rocks.contains(p)) {
-                   '#'
-               } else {
-                   '.'
-               }
-           }.toCharArray()
-
-            println(l)
-
-        }
-
+        print(garden, endPoints)
         return endPoints.size
+    }
+
+    private fun print(garden: Garden, endPoints: MutableSet<Point>) {
+        // Render the garden with set of end points
+        (garden.minX..garden.maxX).forEach { y ->
+            val l = (garden.minX..garden.maxX).map { x ->
+                val p = Point(y, x)
+                if (endPoints.contains(p)) {
+                    'O'
+                } else if (garden.rocks.contains(p)) {
+                    '#'
+                } else {
+                    '.'
+                }
+            }.toCharArray()
+            println(l)
+        }
     }
 
     private fun parseGarden(filename: String): Garden {
