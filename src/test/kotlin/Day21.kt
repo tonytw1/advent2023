@@ -5,8 +5,8 @@ class Day21 : Helpers {
 
     @Test
     fun part1() {
-        assertEquals(walk(parseGarden("day21example.txt"), 6), 16)
-        assertEquals(walk(parseGarden("day21.txt"), 64), 3503)
+        assertEquals(walk(parseGarden("day21example.txt"), 6).size, 16)
+        assertEquals(walk(parseGarden("day21.txt"), 64).size, 3503)
     }
 
     @Test
@@ -29,7 +29,7 @@ class Day21 : Helpers {
         // Area of filler diamonds
     }
 
-    private fun walk(garden: Garden, range: Int): Int {
+    private fun walk(garden: Garden, range: Int): Set<Point> {
         fun neighboursOf(p: Point): Set<Point> {
             val neighbours = mutableListOf<Point>()
 
@@ -72,13 +72,12 @@ class Day21 : Helpers {
         }
 
         visit(garden.start, range)
-        print(garden, endPoints)
-        return endPoints.size
+        return endPoints
     }
 
     private fun print(garden: Garden, endPoints: MutableSet<Point>) {
         // Render the garden with set of end points
-        (garden.minX..garden.maxX).forEach { y ->
+        (garden.minY..garden.maxY).forEach { y ->
             val l = (garden.minX..garden.maxX).map { x ->
                 val p = Point(y, x)
                 if (endPoints.contains(p)) {
@@ -111,11 +110,17 @@ class Day21 : Helpers {
             }
         }.first()
 
-        return Garden(minY = 0, maxY = height - 1, minX = 0, maxX = width-1, rocks = rocks, start = start)
+        // Recenter the garden around the start point; makes scaling out easier
+        val recenteredRocks = rocks.map { r ->
+            Point(r.y - start.y, r.x - start.x)
+        }.toSet()
+
+        val minY = 0 - start.y
+        val minX = 0 - start.x
+        return Garden(minY = minY, maxY = minY + height -1, minX = minX, maxX = minX + width - 1, rocks = recenteredRocks, start = Point(0, 0))
     }
 
     data class Point(val y: Int, val x: Int)
     data class Garden(val minY: Int, val maxY: Int, val minX: Int, val maxX: Int, val rocks: Set<Point>, val start: Point)
-
 
 }
