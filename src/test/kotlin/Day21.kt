@@ -9,18 +9,37 @@ class Day21 : Helpers {
         assertEquals(walk(parseGarden("day21.txt"), 64), 3503)
     }
 
+    @Test
+    fun part2() {
+        val i = 65  // Number of steps to span first page
+
+        val z = 26501365
+        println(((z -65)  % 131)) //= 0
+        println(((z -65)  / 131)) //= 202300
+        // There are 1 + (2 * 202300) dimonds on the 0 row
+
+        // Main diamonds have this area
+        val a = walk(parseGarden("day21.txt"), i)
+        println(a)
+
+        // Needs
+        // Number of main diamonds;
+        // 1 + radius
+        // Number of filler diamonds
+        // Area of filler diamonds
+    }
+
     private fun walk(garden: Garden, range: Int): Int {
         fun neighboursOf(p: Point): Set<Point> {
             val neighbours = mutableListOf<Point>()
-            val maxWidth = garden.width - 1
-            val maxHeight = garden.height - 1
-            for (y in listOf(p.y - 1, 0).max()..listOf(p.y + 1, maxHeight).min()) {
+
+            for (y in listOf(p.y - 1, garden.minY).max()..listOf(p.y + 1, garden.maxY).min()) {
                 val n = Point(y, p.x)
                 if (!garden.rocks.contains(n)) {
                     neighbours.add(n)
                 }
             }
-            for (x in listOf(p.x - 1, 0).max()..listOf(p.x + 1, maxWidth).min()) {
+            for (x in listOf(p.x - 1, garden.minX).max()..listOf(p.x + 1, garden.maxX).min()) {
                 val n = Point(p.y, x)
                 if (!garden.rocks.contains(n)) {
                     neighbours.add(n)
@@ -53,6 +72,23 @@ class Day21 : Helpers {
         }
 
         visit(garden.start, range)
+
+        (garden.minX..garden.maxX).forEach { y->
+           val l = (garden.minX..garden.maxX).map { x ->
+               val p = Point(y, x)
+               if (endPoints.contains(p)) {
+                   'O'
+               } else if (garden.rocks.contains(p)) {
+                   '#'
+               } else {
+                   '.'
+               }
+           }.toCharArray()
+
+            println(l)
+
+        }
+
         return endPoints.size
     }
 
@@ -74,11 +110,11 @@ class Day21 : Helpers {
             }
         }.first()
 
-        return Garden(width = width, height = height, rocks = rocks, start = start)
+        return Garden(minY = 0, maxY = height - 1, minX = 0, maxX = width-1, rocks = rocks, start = start)
     }
 
     data class Point(val y: Int, val x: Int)
-    data class Garden(val width: Int, val height: Int, val rocks: Set<Point>, val start: Point)
+    data class Garden(val minY: Int, val maxY: Int, val minX: Int, val maxX: Int, val rocks: Set<Point>, val start: Point)
 
 
 }
