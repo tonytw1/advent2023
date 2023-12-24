@@ -1,6 +1,7 @@
 import org.testng.Assert.assertEquals
 import org.testng.annotations.Test
 import java.lang.RuntimeException
+import java.math.BigDecimal
 
 class Day21 : Helpers {
 
@@ -15,80 +16,59 @@ class Day21 : Helpers {
         val garden = parseGarden("day21.txt")
         // Scale out the garden to experiment with
         val scaledGarden = scaleOut(garden, 4)
+
         // Is the number of steps taken interesting?
         val z = 26501365
-
-        val i =  garden.width() / 2  // Number of steps to span first page is 65 steps with reminder 1; the start point
+        val i = garden.width() / 2  // Number of steps to span first page is 65 steps with reminder 1; the start point
 
         // After reaching the edge of the first garden; is the number of steps to z a multiple of full garden widths?
         val stepsAfterFirstGarden = z - i
         val reminder = ((stepsAfterFirstGarden % garden.width()))
-        if (reminder !=0) {
+        if (reminder != 0) {
             throw RuntimeException()
         }
 
         val extraGardensToCover = stepsAfterFirstGarden / garden.width()
-        //println(extraGardensToCover) //= 202300
-
         // So we can now express the problem in terms of how may extra garden widths to span
-        // And we need th result for numOfExtraGardenWidths = 202300
+        // And we need the result for numOfExtraGardenWidths = 202300
 
-        // We can brute force the first few in a reaonable amout of time to gain information.
+        // We can brute force the first few in a reasonable amount of time to gain information.
         // Part 1 is our north star
-       (0..3).forEach { numOfExtraGardenWidths ->
+        (0..2).forEach { numOfExtraGardenWidths ->
             //0 - 3606
             //1 - 32258
             //2 - 89460
             //3 - 175212
             //4 - 289514
-           val width = garden.width()
-           println("!!! W $width")
-           println("$numOfExtraGardenWidths: " + walk(scaledGarden, i + (numOfExtraGardenWidths * width)).size)
+            val width = garden.width()
+            val range = i + (numOfExtraGardenWidths * width)
+            println("$numOfExtraGardenWidths: " + walk(scaledGarden, range).size)
         }
 
-        var n = 1L
-        (0L..5).forEach { i ->
-            val d = (i * 4)
-            println("NL $i: $n $d")
-            n += d
+        // Which fit this quadratic curve:
+        // 14275. x^2 - 14173. x + 3504.
+        val c2 = 14275L
+        val c1 = -14173L
+        val c0 = 3504L
+
+        // Needed this example to get it over the line:
+        // https://www.reddit.com/r/adventofcode/comments/18nevo3/comment/keays65/
+
+        fun quadratic(n: Int): BigDecimal {
+            val N = BigDecimal(n)
+            val a = BigDecimal(c2).times(N.times(N))
+            val b = BigDecimal(c1).times(N)
+            val c = BigDecimal(c0)
+            return a.plus(b).plus(c)
         }
 
-
-
-        // As we scale out, we get muliples of the first dimamond and the filler diamonds
-        // 0: 1, 0  (0)             1 + n * 4)
-        // 1: 5, 4  (0 + 4)
-        // 2: 13, 12    (0 + 4 + 8)
-        // 3  25 = 29, 28   (0 + 4 + 8 + 16)
-        // l = 0 and l = 1 tell us about the area of the different diamonds
-        val areaOfFirstDiamond = walkForToExtraGardens(scaledGarden, garden, 0)
-        println("D1A: " + areaOfFirstDiamond)
-
-        val areaOf5MainDiamondsAnd4SecondardDiamonds = walkForToExtraGardens(scaledGarden, garden, 1)
-        val areaOf4SecondaryDiamonds = areaOf5MainDiamondsAnd4SecondardDiamonds - (areaOfFirstDiamond * 5)
-
-        val areaOfSecondaryDiamond = areaOf4SecondaryDiamonds / 4
-        if (areaOf4SecondaryDiamonds % 4 != 0) {
-            //throw RuntimeException()
+        // Cross check
+        listOf(0, 1, 2, 3, 4).forEach { n ->
+            println("$n: " + quadratic(n))
         }
-        println("D2A: " + areaOfSecondaryDiamond)
 
-
-        // Cross check with l=2
-        println("N1 " + ((areaOfFirstDiamond * 5) + (areaOf4SecondaryDiamonds * 1)))
-        println("N2 " + ((areaOfFirstDiamond * 13) + (areaOf4SecondaryDiamonds * 3)))
-        println("N3 " + ((areaOfFirstDiamond * 25) + (areaOf4SecondaryDiamonds * 7)))
-    }
-
-
-
-    private fun walkForToExtraGardens(
-        scaledGarden: Garden,
-        garden: Garden,
-        numOfExtraGardenWidths: Int
-    ): Int {
-        val firstGardenBoundary = garden.width() / 2
-        return walk(scaledGarden, (firstGardenBoundary) + ((garden.width()) * numOfExtraGardenWidths) -1).size
+        val result = quadratic(extraGardensToCover + 1)
+        assertEquals(result, BigDecimal(584211423220706))
     }
 
     private fun walk(garden: Garden, range: Int): Set<Point> {
@@ -151,9 +131,10 @@ class Day21 : Helpers {
         }
 
         return g.copy(
-            minY = g.minX - (d * garden.height()) , maxY =  g.maxX + (d * garden.height()),
-            minX = g.minX - (d * garden.width()) , maxX =  g.maxX + (d * garden.width()),
-            rocks =  map.toSet())
+            minY = g.minX - (d * garden.height()), maxY = g.maxX + (d * garden.height()),
+            minX = g.minX - (d * garden.width()), maxX = g.maxX + (d * garden.width()),
+            rocks = map.toSet()
+        )
     }
 
     private fun printGarden(garden: Garden, endPoints: Set<Point>) {
@@ -198,11 +179,25 @@ class Day21 : Helpers {
 
         val minY = 0 - start.y
         val minX = 0 - start.x
-        return Garden(minY = minY, maxY = minY + height -1, minX = minX, maxX = minX + width - 1, rocks = recenteredRocks, start = Point(0, 0))
+        return Garden(
+            minY = minY,
+            maxY = minY + height - 1,
+            minX = minX,
+            maxX = minX + width - 1,
+            rocks = recenteredRocks,
+            start = Point(0, 0)
+        )
     }
 
     data class Point(val y: Int, val x: Int)
-    data class Garden(val minY: Int, val maxY: Int, val minX: Int, val maxX: Int, val rocks: Set<Point>, val start: Point) {
+    data class Garden(
+        val minY: Int,
+        val maxY: Int,
+        val minX: Int,
+        val maxX: Int,
+        val rocks: Set<Point>,
+        val start: Point
+    ) {
         fun width() = (maxX - minX) + 1
         fun height() = (maxY - minY) + 1
     }
