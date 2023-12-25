@@ -1,3 +1,4 @@
+import org.testng.Assert.assertEquals
 import org.testng.annotations.Test
 import kotlin.time.Duration.Companion.seconds
 
@@ -6,7 +7,7 @@ class Day23 : Helpers {
     @Test
     fun part1() {
         // Parse the map to an array of chars; we can discard it once we have a graph
-        val maze = extractPaths("day23example.txt")
+        val maze = extractPaths("day23.txt")
         println(maze)
 
         var best = 0
@@ -42,6 +43,8 @@ class Day23 : Helpers {
         visit(maze.start, 0, emptyList())
 
 
+        assertEquals(best, 94)
+
 
 
 
@@ -68,7 +71,6 @@ class Day23 : Helpers {
         vertices.add(end)
 
         // Also record visited cells
-        val visited = mutableSetOf<Point>()
 
         fun neighboursOf(p: Point): Set<Point> {
             val neighbours = mutableListOf<Point>()
@@ -94,6 +96,7 @@ class Day23 : Helpers {
 
         while (verticesToExploreFrom.isNotEmpty()) {
             val start = verticesToExploreFrom.removeFirst()
+            val visited = mutableSetOf<Point>()
 
             var previous = start.first
             var current = start.second
