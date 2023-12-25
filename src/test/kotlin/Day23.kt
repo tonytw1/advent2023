@@ -9,10 +9,18 @@ class Day23 : Helpers {
             line.value.toCharArray()
         }.toTypedArray()
 
+        // Record the vertices we find
+        val vertices = mutableSetOf<Point>()
         // Start and end are give
         val start = Point(0, 1)
         val end = Point(21, 22)
+        vertices.add(start.copy(y = start.y + 1))
+        vertices.add(end)
+
+        // Also record visited cells
         val visited = mutableSetOf<Point>()
+
+
         fun neighboursOf(p: Point): Set<Point> {
             val neighbours = mutableListOf<Point>()
             val minY = 0
@@ -30,25 +38,50 @@ class Day23 : Helpers {
             return neighbours.filter { it != p && map[it.y][it.x] != '#'}.toSet()
         }
 
-        val queue = ArrayDeque<Point>()
+        val verticesToExploreFrom = ArrayDeque<Point>()
+        println("A")
+        // Queue of vertices to be explored from
+        verticesToExploreFrom.add(start)
 
-        // Start at start and follow the trail to the first junction.
-        queue.add(start)
+        while(verticesToExploreFrom.isNotEmpty()) {
+            val start =  verticesToExploreFrom.removeFirst()
+            var current = start
+            var d = 1
 
-        while(queue.isNotEmpty()) {
-            var current = queue.removeFirst()
-            println("" + current + ": " + map[current.y][current.x])
-            val ns = neighboursOf(current)
+            println("Starting from " + current + ": " + map[current.y][current.x])
 
-            val isJunction = ns.size == 3
-            if (isJunction) {
-                println("*")
+            var done = false
+            while (!done) {
+                visited.add(current)
+                val neighbours = neighboursOf(current)
+
+                val isJunction = neighbours.size == 3 || vertices.contains(current)
+                if (isJunction) {
+                    println("VT: $start -> $current: $d")
+                    vertices.add(current)
+
+                    // Queue for unvisited branches
+                    val next = neighbours.filter { !visited.contains(it) }
+                    next.forEach { nextStart ->
+                        verticesToExploreFrom.add(nextStart)
+                    }
+                    done = true
+                } else {
+
+                    // Expect 1 only next step
+                    val next = neighbours.filter { !visited.contains(it) }
+                    done = next.isEmpty()
+
+                    if (!done) {
+                        if (next.size != 1) {
+                            throw RuntimeException("" + next.size)
+                        }
+                        current = next.first()
+                        d += 1
+                    }
+                }
             }
 
-            ns.filter { !visited.contains(it) }.forEach {
-                visited.add(it)
-                queue.add(it)
-            }
         }
     }
 
