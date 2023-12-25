@@ -5,8 +5,15 @@ class Day23 : Helpers {
 
     @Test
     fun part1() {
-        assertEquals(findLongestPathByDFS(extractPaths("day23example.txt")), 94)
-        assertEquals(findLongestPathByDFS(extractPaths("day23.txt")), 2222)
+        assertEquals(findLongestPathByDFS(extractPaths("day23example.txt", true)), 94)
+        assertEquals(findLongestPathByDFS(extractPaths("day23.txt", true)), 2222)
+    }
+
+
+    @Test
+    fun part2() {
+        assertEquals(findLongestPathByDFS(extractPaths("day23example.txt", false)), 154)
+        assertEquals(findLongestPathByDFS(extractPaths("day23.txt", false)), 6590)
     }
 
     private fun findLongestPathByDFS(maze: Maze): Int {
@@ -35,12 +42,13 @@ class Day23 : Helpers {
         return best
     }
 
-    private fun extractPaths(filename: String): Maze {
+    private fun extractPaths(filename: String, enforceOneWays: Boolean): Maze {
         val map = stringsFromFile(filename).withIndex().map { line ->
             line.value.toCharArray()
         }.toTypedArray()
 
         val paths = mutableMapOf<Pair<Point, Point>, Int>()
+        val exploredStarts = mutableSetOf<Pair<Point, Point>>()
 
         // Record the vertices we find
         val vertices = mutableSetOf<Point>()
@@ -111,7 +119,7 @@ class Day23 : Helpers {
                     false
                 }
 
-                if (wrongWay) {
+                if (wrongWay && enforceOneWays) {
                     // Drop path
                     done = true
 
@@ -125,7 +133,11 @@ class Day23 : Helpers {
                         // Queue for unvisited branches
                         val next = neighbours.filter { !visited.contains(it) }
                         next.forEach { nextStart ->
-                            verticesToExploreFrom.add(Pair(current, nextStart))
+                            val nextStarting = Pair(current, nextStart)
+                            if (!exploredStarts.contains(nextStarting)) {
+                                verticesToExploreFrom.add(nextStarting)
+                            }
+                            exploredStarts.add(nextStarting)
                         }
                         done = true
 
