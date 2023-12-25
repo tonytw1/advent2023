@@ -1,54 +1,38 @@
 import org.testng.Assert.assertEquals
 import org.testng.annotations.Test
-import kotlin.time.Duration.Companion.seconds
 
 class Day23 : Helpers {
 
     @Test
     fun part1() {
-        // Parse the map to an array of chars; we can discard it once we have a graph
-        val maze = extractPaths("day23.txt")
-        println(maze)
+        assertEquals(findLongestPathByDFS(extractPaths("day23example.txt")), 94)
+        assertEquals(findLongestPathByDFS(extractPaths("day23.txt")), 2222)
+    }
 
+    private fun findLongestPathByDFS(maze: Maze): Int {
         var best = 0
 
         // Naive DFS from start to end
         fun visit(p: Point, d: Int, path: List<Point>) {
-            println("------")
-            val pn = path.toMutableList()
-            pn.add(p)
-
-            println("" + pn  + ": " + d)
+            val updatedPath = path.toMutableList()
+            updatedPath.add(p)
             if (p == maze.end) {
-                println("!!!!! " + d)
                 if (d > best) {
                     best = d
                 }
             }
+            val downStreams = maze.paths.filter {
+                it.key.first == p
+            }.filter { !updatedPath.contains(it.key.second) }
 
-            val downStreams = maze.paths.filter { path ->
-                path.key.first == p
-            }.filter { !pn.contains( it.key.second ) }
-
-            println("DS: " + downStreams)
-
-
-            downStreams.entries.forEach{ ds ->
+            downStreams.entries.forEach { ds ->
                 val to = ds.key.second
-                println("D " + p + " -> " + to)
-                visit(to, d + ds.value, pn)
+                visit(to, d + ds.value, updatedPath)
             }
         }
 
         visit(maze.start, 0, emptyList())
-
-
-        assertEquals(best, 94)
-
-
-
-
-
+        return best
     }
 
     private fun extractPaths(filename: String): Maze {
@@ -60,17 +44,11 @@ class Day23 : Helpers {
 
         // Record the vertices we find
         val vertices = mutableSetOf<Point>()
-        // Start and end are give
+        // Start and end are given
         val start =  Point(0, map[0].indexOf('.'))
         val end = Point(map.lastIndex, map.last().indexOf('.'))
-        
-        println("START: " + start)
-        println("END: " + end)
-
         vertices.add(start)
         vertices.add(end)
-
-        // Also record visited cells
 
         fun neighboursOf(p: Point): Set<Point> {
             val neighbours = mutableListOf<Point>()
@@ -95,14 +73,14 @@ class Day23 : Helpers {
 
 
         while (verticesToExploreFrom.isNotEmpty()) {
-            val start = verticesToExploreFrom.removeFirst()
+            // Explore from this vertice to discover the next ones
+            val startOfPath = verticesToExploreFrom.removeFirst()
             val visited = mutableSetOf<Point>()
 
-            var previous = start.first
-            var current = start.second
-            println("Starting from " + previous + ": " + map[previous.y][previous.x])
+            var previous = startOfPath.first
+            var current = startOfPath.second
 
-            visited.add(start.first)
+            visited.add(startOfPath.first)
             var d = 1
 
             // Track direction so that one way paths can be correctly ignored
@@ -115,7 +93,6 @@ class Day23 : Helpers {
             var done = false
             while (!done) {
                 visited.add(current)
-
 
                 val dir = dirFrom(previous, current)
                 val c = map[current.y][current.x]
@@ -135,17 +112,15 @@ class Day23 : Helpers {
                 }
 
                 if (wrongWay) {
-                    println("WW: ${start.first} -> $current: !")
+                    // Drop path
                     done = true
 
                 } else {
                     val neighbours = neighboursOf(current)
                     val isJunction = neighbours.size >= 3 || vertices.contains(current)
                     if (isJunction) {
-                        println("VT: ${start.first} -> $current: $d")
                         vertices.add(current)
-
-                        paths[(Pair(start.first, current))] = d
+                        paths[(Pair(startOfPath.first, current))] = d
 
                         // Queue for unvisited branches
                         val next = neighbours.filter { !visited.contains(it) }
@@ -155,14 +130,12 @@ class Day23 : Helpers {
                         done = true
 
                     } else {
-
                         // Expect 1 only next step
                         val next = neighbours.filter { !visited.contains(it) }
                         done = next.isEmpty()
                         if (next.isEmpty()) {
-                           println("DE: ${start.first} -> $current: *")
+                            // Dead end
                         }
-
                         if (!done) {
                             if (next.size != 1) {
                                 throw RuntimeException("$current " + next.size)
@@ -177,7 +150,6 @@ class Day23 : Helpers {
         }
         return Maze(start, end, paths)
     }
-
 
     data class Maze( val start: Point, val end: Point, val paths: Map<Pair<Point, Point>, Int>)
 
