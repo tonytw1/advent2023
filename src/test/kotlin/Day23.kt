@@ -1,15 +1,54 @@
 import org.testng.annotations.Test
+import kotlin.time.Duration.Companion.seconds
 
 class Day23 : Helpers {
 
     @Test
     fun part1() {
         // Parse the map to an array of chars; we can discard it once we have a graph
-        val paths = extractPaths("day23example.txt")
-        println(paths)
+        val maze = extractPaths("day23example.txt")
+        println(maze)
+
+        var best = 0
+
+        // Naive DFS from start to end
+        fun visit(p: Point, d: Int, path: List<Point>) {
+            println("------")
+            val pn = path.toMutableList()
+            pn.add(p)
+
+            println("" + pn  + ": " + d)
+            if (p == maze.end) {
+                println("!!!!! " + d)
+                if (d > best) {
+                    best = d
+                }
+            }
+
+            val downStreams = maze.paths.filter { path ->
+                path.key.first == p
+            }.filter { !pn.contains( it.key.second ) }
+
+            println("DS: " + downStreams)
+
+
+            downStreams.entries.forEach{ ds ->
+                val to = ds.key.second
+                println("D " + p + " -> " + to)
+                visit(to, d + ds.value, pn)
+            }
+        }
+
+        visit(maze.start, 0, emptyList())
+
+
+
+
+
+
     }
 
-    private fun extractPaths(filename: String): MutableMap<Pair<Point, Point>, Int> {
+    private fun extractPaths(filename: String): Maze {
         val map = stringsFromFile(filename).withIndex().map { line ->
             line.value.toCharArray()
         }.toTypedArray()
@@ -95,10 +134,7 @@ class Day23 : Helpers {
                 if (wrongWay) {
                     println("WW: ${start.first} -> $current: !")
                     done = true
-                    
-                    
-                    
-                    
+
                 } else {
                     val neighbours = neighboursOf(current)
                     val isJunction = neighbours.size >= 3 || vertices.contains(current)
@@ -121,7 +157,7 @@ class Day23 : Helpers {
                         val next = neighbours.filter { !visited.contains(it) }
                         done = next.isEmpty()
                         if (next.isEmpty()) {
-                            println("DE: ${start.first} -> $current: *")
+                           println("DE: ${start.first} -> $current: *")
                         }
 
                         if (!done) {
@@ -136,8 +172,11 @@ class Day23 : Helpers {
                 }
             }
         }
-        return paths
+        return Maze(start, end, paths)
     }
+
+
+    data class Maze( val start: Point, val end: Point, val paths: Map<Pair<Point, Point>, Int>)
 
     data class Point(val y: Int, val x: Int)
 
