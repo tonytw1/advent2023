@@ -1,6 +1,7 @@
 47/50 this year which was a personal best.
 
 Kotlin seems to consistenctly produce lower line counts than Java.
+The syntax for common operations like sort seems more memorable.
 
 [Day 12](src/test/kotlin/Day12.kt) part 2 was the most enlightening exercise.
 
